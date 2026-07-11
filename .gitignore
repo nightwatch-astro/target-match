@@ -1,0 +1,23 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+*.pdb
+
+# Editors / OS
+.DS_Store
+*.swp
+*~
+.idea/
+
+# Environment / secrets (never commit real secrets)
+.env
+.env.*
+!.env.example
+
+# Local caches (keep committed APM/SpecKit config, ignore their caches)
+.project-setup/.cache/
+*.log
+
+
+# APM dependencies
+apm_modules/
