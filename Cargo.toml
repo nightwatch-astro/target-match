@@ -24,8 +24,12 @@ serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
 # Property-based testing of the geometric invariants (separation symmetry,
-# radius-boundary inclusivity, sexagesimal round-trip).
+# radius-boundary inclusivity, sexagesimal / precession round-trip, matcher==rank).
 proptest = "1"
+# Application-style error handling in the example only (never the public API).
+anyhow = "1"
+# Exercises the optional `serde` feature end-to-end (feature-gated test).
+serde_json = "1"
 
 [lib]
 path = "src/lib.rs"

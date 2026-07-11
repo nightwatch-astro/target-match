@@ -39,7 +39,7 @@ impl Equatorial {
 }
 
 pub fn separation(a: Equatorial, b: Equatorial) -> Angle;      // haversine, [0,180]°, symmetric
-pub fn precess(pos: Equatorial, to: Epoch) -> Result<Equatorial>; // IAU1976; needs a date if OfDate
+pub fn precess(pos: Equatorial, to: Epoch) -> Equatorial;      // IAU1976; infallible (Epoch always carries its date)
 ```
 
 **Guarantees**: `parse` accepts colon- or space-separated sexagesimal, fractional seconds, and
@@ -81,26 +81,32 @@ pub enum Membership {
     Rectangle { fov: (Angle, Angle) },
     Rotated { fov: (Angle, Angle), position_angle: Angle },
 }
-pub enum Query { AllWithinField, NearestOne, NearestN { n: usize, max_radius: Option<Angle> }, IsFramed }
-pub struct Constraint { pub membership: Membership, pub query: Query }
+pub enum Query { AllWithinField, NearestOne, NearestN { n: usize, max_radius: Option<Angle> } }
+pub struct Constraint { pub membership: Membership, pub query: Query, pub pixel_scale: Option<(f64,f64)> }
+// builders: Constraint::within(&Field, RadiusPolicy) | circular(Angle) | frame(&Field) | frame_rotated(&Field, Angle)
+//           .all() | .nearest_one() | .nearest_n(usize) | .nearest_n_within(usize, Angle)
 
 pub struct Offset { pub sky: (Angle,Angle), pub frame: Option<(Angle,Angle)>, pub pixels: Option<(f64,f64)> }
 pub struct Match<'a, T> { pub object: &'a T, pub separation: Angle, pub in_frame: bool, pub offset: Offset, pub position_angle: Angle }
 
-pub fn rank<T: SkyObject>(pointing: Equatorial, objects: &[T], c: Constraint) -> Result<Vec<Match<'_, T>>>;
+// Matching is INFALLIBLE (see docs/DECISIONS.md): the pointing always carries a resolvable epoch.
+pub fn rank<T: SkyObject>(pointing: Equatorial, objects: &[T], c: Constraint) -> Vec<Match<'_, T>>;
+pub fn is_framed<T: SkyObject>(pointing: Equatorial, object: &T, m: Membership) -> Match<'_, T>;
 
 pub struct Matcher<T> { /* dec-sorted */ }
 impl<T: SkyObject> Matcher<T> {
     pub fn from_objects(objects: Vec<T>) -> Matcher<T>;
-    pub fn query(&self, pointing: Equatorial, c: Constraint) -> Result<Vec<Match<'_, T>>>;
+    pub fn query(&self, pointing: Equatorial, c: Constraint) -> Vec<Match<'_, T>>;
     pub fn objects(&self) -> &[T];
-    pub fn is_framed(&self, pointing: Equatorial, object: &T, m: Membership) -> Result<Match<'_, T>>;
+    pub fn is_framed<'a>(&self, pointing: Equatorial, object: &'a T, m: Membership) -> Match<'a, T>;
 }
 ```
 
 **Guarantees**:
 - Matching reads `position()` only — never a name (FR-X5). A pointing not in J2000 is precessed
-  to J2000 first; JNow without a date → `Error::MissingObservationDate`.
+  to J2000 first. `IsFramed` is realized as the free `is_framed` fn / `Matcher::is_framed` method
+  rather than a `Query` variant. `MissingObservationDate`/`EpochMismatch` are unreachable (the
+  epoch always carries its date), so matching is infallible — see docs/DECISIONS.md.
 - `Membership::Rectangle`/`Rotated` test true tangent-plane membership; the circumscribed circle
   pre-filters. `AllWithinField` returns every in-frame object ranked ascending by separation;
   `NearestOne` the nearest; `NearestN` the N nearest (honouring `max_radius`).

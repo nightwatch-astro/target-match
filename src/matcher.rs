@@ -72,6 +72,7 @@ pub enum Query {
 /// A membership shape combined with a query mode (and the plate scale, when known,
 /// so pixel offsets can be reported).
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Constraint {
     /// The in-frame shape.
     pub membership: Membership,
