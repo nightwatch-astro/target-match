@@ -17,14 +17,19 @@ categories = ["science", "mathematics"]
 serde = ["dep:serde"]
 
 [dependencies]
-# No runtime dependencies: the crate is pure trigonometry over `std`. `serde` is
-# optional and off by default.
+# Typed public error enum. Pure-Rust, proc-macro only — no runtime weight.
+thiserror = "2"
+# Optional, off by default: derives Serialize/Deserialize on public data types.
 serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
 # Property-based testing of the geometric invariants (separation symmetry,
-# radius-boundary inclusivity, sexagesimal round-trip).
+# radius-boundary inclusivity, sexagesimal / precession round-trip, matcher==rank).
 proptest = "1"
+# Application-style error handling in the example only (never the public API).
+anyhow = "1"
+# Exercises the optional `serde` feature end-to-end (feature-gated test).
+serde_json = "1"
 
 [lib]
 path = "src/lib.rs"
