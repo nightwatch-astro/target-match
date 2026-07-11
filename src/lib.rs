@@ -1,17 +1,15 @@
-//! `target-match` — identify which catalogued sky object a telescope frame captured.
+//! Identify which catalogued sky objects a telescope frame covers, given a
+//! pointing (right ascension / declination) and a field of view (derived from
+//! optics, or supplied directly).
 //!
-//! Given a **pointing** (right ascension / declination) and a **field of view**
-//! (derived from optics, or supplied directly), `target-match` ranks a
-//! caller-supplied set of catalogue objects by angular separation and returns
-//! those that fall on the frame. Matching is done **by sky position only, never
-//! by name** — a designation may ride along on a result for display, but it
-//! never influences the match (capture software writes object names
-//! inconsistently; coordinates are authoritative).
+//! A caller-supplied set of catalogue objects is ranked by angular separation
+//! from the pointing; objects inside the frame's membership shape are flagged.
+//! Matching uses sky position only — a designation may ride along on a result
+//! for display, but it never influences the match.
 //!
-//! The crate is **catalog-agnostic**: it owns no catalogue data and performs no
-//! I/O. A consumer brings its own objects — from a database, a file, a SIMBAD
-//! resolver, or a hand-built list — by implementing the [`matcher`] crate's
-//! `SkyObject` trait, and `target-match` does the geometry.
+//! The crate holds no catalogue data and performs no I/O. A consumer supplies
+//! its own objects — from a database, a file, a name resolver, or a hand-built
+//! list — by implementing the [`matcher`] module's `SkyObject` trait.
 //!
 //! # Modules
 //!
@@ -48,11 +46,6 @@
 //! let hits = rank(pointing, &catalog, Constraint::within(&field, RadiusPolicy::Circumscribed).nearest_one());
 //! assert_eq!(hits[0].object.name, "M 31");
 //! ```
-//!
-//! # Status
-//!
-//! Extracted from the `nightwatch-astro/alm` targeting pipeline; specified and
-//! implemented under `specs/001-target-match-core/` (SpecKit).
 
 pub mod angle;
 pub mod error;

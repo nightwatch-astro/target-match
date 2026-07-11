@@ -2,10 +2,9 @@
 //!
 //! A [`Field`] is the angular extent of a frame, built from full [`Optics`], from
 //! a directly supplied pixel scale, or from a directly supplied field of view. It
-//! is **binning-aware** (effective pixel = pixel size × binning, per axis) and
-//! **axis-independent** (x and y handled separately) — the two gaps in the
-//! original `alm` implementation. A [`RadiusPolicy`] turns a field into a search
-//! radius.
+//! is binning-aware (effective pixel = pixel size × binning, per axis) and
+//! axis-independent (x and y are handled separately). A [`RadiusPolicy`] turns a
+//! field into a search radius.
 
 use crate::angle::Angle;
 use crate::error::{Error, Result};

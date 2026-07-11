@@ -1,28 +1,25 @@
 # target-match
 
-A pure-Rust library that identifies **which catalogued sky object a telescope frame
-captured** — from where the scope pointed and how much sky the frame covers.
+Rust library that identifies which catalogued sky objects a telescope frame
+covers, given a pointing (right ascension / declination) and a field of view.
 
-- **Coordinates, never names** — matching is done purely by sky position. A frame's
-  `OBJECT` string (written inconsistently by capture software) is never a search key;
-  a designation may ride along on a result for display only.
-- **Catalog-agnostic** — the crate owns no catalogue data and does no I/O. You bring
-  your own objects (a database, a file, a SIMBAD resolver, a hand-built list) by
-  implementing one small trait; `target-match` does the geometry.
-- **Pure Rust, dependency-light** — one small runtime dependency (`thiserror`), MSVC-safe.
-  Optional off-by-default `serde`.
-- **Flexible inputs** — pointing and distances in decimal degrees *or* sexagesimal
-  (`HH:MM:SS` / `±DD:MM:SS`); field of view from optics (focal length, pixel size
-  x/y, binning x/y, sensor pixels), from a pixel scale, or given directly.
-
-## Status
-
-Implemented and tested, extracted from the [`nightwatch-astro/alm`](https://github.com/nightwatch-astro/alm)
-targeting pipeline. The `angle`, `optics`, and `matcher` modules are complete; the
-specification lives under [`specs/001-target-match-core/`](specs/001-target-match-core/)
-(SpecKit). See [`examples/identify.rs`](examples/identify.rs) for a runnable demo.
+Matching is by angular position; object names are never used as search keys (a
+designation can be carried on a result for display). The crate holds no
+catalogue data and performs no I/O: callers supply objects by implementing the
+one-method `SkyObject` trait, and the library computes the geometry — angular
+separation, in-frame membership (circular or rectangular, with optional camera
+rotation), tangent-plane offsets, and deterministic ranking. Coordinates accept
+decimal degrees or sexagesimal (`HH:MM:SS` / `±DD:MM:SS`). The field of view
+can be computed from optics (focal length, pixel size, binning, sensor
+dimensions), from a pixel scale, or supplied directly. JNow ↔ J2000 precession
+is included.
 
 ## Usage
+
+```toml
+[dependencies]
+target-match = "0.1"
+```
 
 ```rust
 use target_match::{rank, Angle, Constraint, Equatorial, Field, Optics, RadiusPolicy, SkyObject};
@@ -54,14 +51,14 @@ assert_eq!(hits[0].object.name, "M 31");
 ```
 
 For a batch of frames against one catalogue, build the index once with
-`Matcher::from_objects(..)` and call `.query(pointing, constraint)` repeatedly. Rectangular
-in-frame membership (with optional camera rotation) and JNow→J2000 precession are supported;
-see the module docs.
+`Matcher::from_objects(..)` and call `.query(pointing, constraint)` repeatedly.
+See [`examples/identify.rs`](examples/identify.rs) for a runnable end-to-end
+demo.
 
 ## Features
 
-- `serde` *(off by default)* — derive `Serialize`/`Deserialize` on the public coordinate
-  and match types. Enable with `target-match = { version = "…", features = ["serde"] }`.
+- `serde` *(off by default)* — derives `Serialize`/`Deserialize` on the public
+  coordinate and match types.
 
 ## Development
 
