@@ -11,6 +11,11 @@ readme = "README.md"
 keywords = ["astronomy", "astrophotography", "catalog", "coordinates", "fov"]
 categories = ["science", "mathematics"]
 
+# docs.rs builds with default features only unless told otherwise; include the
+# optional `serde` derives in the generated API documentation.
+[package.metadata.docs.rs]
+all-features = true
+
 [features]
 # Off by default. Derives Serialize/Deserialize on the public coordinate and
 # match types so positions/results can be (de)serialized to JSON and other
