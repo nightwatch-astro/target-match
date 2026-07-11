@@ -14,6 +14,9 @@ can be computed from optics (focal length, pixel size, binning, sensor
 dimensions), from a pixel scale, or supplied directly. JNow ↔ J2000 precession
 is included.
 
+API documentation, generated from the source on every release:
+[docs.rs/target-match](https://docs.rs/target-match).
+
 ## Usage
 
 ```toml
