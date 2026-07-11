@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: write
-  issues: write
   pull-requests: write
   id-token: write # OIDC token exchange for crates.io trusted publishing
 
@@ -21,9 +20,23 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      # Mint a short-lived token from the shared org release app. Unlike the
+      # default GITHUB_TOKEN, PRs and tags created with it DO trigger other
+      # workflows — so CI (unit tests) runs on the release PR. Credentials are
+      # provisioned org-wide (visibility=all):
+      #   RELEASE_APP_CLIENT_ID   — Actions variable
+      #   RELEASE_APP_PRIVATE_KEY — Actions secret
+      - name: Mint release app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - uses: googleapis/release-please-action@v5
         id: release
         with:
+          token: ${{ steps.app-token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
