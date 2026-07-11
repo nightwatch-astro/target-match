@@ -79,6 +79,17 @@ Legend: **[DECISION]** made autonomously · **[AMBIGUITY]** resolved with ration
 
 ## Input needed from you
 
-- **[INPUT-NEEDED] Repo visibility** — confirm public is intended (see first decision). No action
-  required if public is fine.
-- _(none blocking; further items will be added here if they arise)_
+- _(none — all prior items ratified below; further items will be added here if they arise)_
+
+## Ratified 2026-07-11
+
+All open decisions from the v0.1 handover were reviewed and confirmed by the maintainer:
+
+- **Repo visibility** — stays **public**.
+- **Infallible matching API** — kept. `MissingObservationDate` / `EpochMismatch` stay dropped;
+  the deviation from FR-M11's literal wording is now **ratified**, not merely flagged.
+  Tradeoffs reviewed: compile-time unrepresentability beats the runtime check the spec's
+  wording asked for; the sole cost is a breaking signature change *if* matching ever becomes
+  fallible, acceptable at v0.x. `spec.md` wording intentionally left as the historical record.
+- **License** — stays **Apache-2.0 only**; no dual MIT before a crates.io publish.
+- **Constitution** — left unratified; principles remain in `AGENTS.md`.
