@@ -17,8 +17,9 @@ categories = ["science", "mathematics"]
 serde = ["dep:serde"]
 
 [dependencies]
-# No runtime dependencies: the crate is pure trigonometry over `std`. `serde` is
-# optional and off by default.
+# Typed public error enum. Pure-Rust, proc-macro only — no runtime weight.
+thiserror = "2"
+# Optional, off by default: derives Serialize/Deserialize on public data types.
 serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]

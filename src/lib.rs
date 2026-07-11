@@ -24,12 +24,46 @@
 //! - [`matcher`] — the `SkyObject` input trait, match constraints (radius,
 //!   rectangular field of view, nearest-N), and deterministic ranking.
 //!
+//! # Example
+//!
+//! ```
+//! use target_match::{Angle, Constraint, Equatorial, Field, Optics, RadiusPolicy, SkyObject, rank};
+//!
+//! struct Target { name: &'static str, ra: f64, dec: f64 }
+//! impl SkyObject for Target {
+//!     fn position(&self) -> Equatorial {
+//!         Equatorial::j2000(Angle::from_degrees(self.ra), Angle::from_degrees(self.dec)).unwrap()
+//!     }
+//! }
+//!
+//! let catalog = [
+//!     Target { name: "M 31",  ra: 10.6847, dec: 41.2688 },
+//!     Target { name: "M 33",  ra: 23.4621, dec: 30.6599 },
+//! ];
+//! let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09").unwrap();
+//! let field = Field::from_optics(Optics {
+//!     focal_mm: 800.0, pixel_um: (3.76, 3.76), binning: (1, 1), pixels: (6248, 4176),
+//! }).unwrap();
+//!
+//! let hits = rank(pointing, &catalog, Constraint::within(&field, RadiusPolicy::Circumscribed).nearest_one());
+//! assert_eq!(hits[0].object.name, "M 31");
+//! ```
+//!
 //! # Status
 //!
-//! Extraction scaffold carved out of the `nightwatch-astro/alm` targeting
-//! pipeline. The public API is being specified under `specs/` (SpecKit); the
-//! module bodies are documented stubs pending that spec.
+//! Extracted from the `nightwatch-astro/alm` targeting pipeline; specified and
+//! implemented under `specs/001-target-match-core/` (SpecKit).
 
 pub mod angle;
+pub mod error;
 pub mod matcher;
 pub mod optics;
+
+pub use angle::{precess, separation, Angle, Epoch, Equatorial};
+pub use error::{Error, Result};
+pub use matcher::{
+    is_framed, rank, Constraint, Match, Matcher, Membership, Offset, Query, SkyObject,
+};
+pub use optics::{
+    Field, Optics, RadiusPolicy, ARCSEC_PER_DEGREE, ARCSEC_PER_RADIAN, DEFAULT_FALLBACK_RADIUS,
+};

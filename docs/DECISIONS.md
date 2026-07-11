@@ -49,6 +49,34 @@ Legend: **[DECISION]** made autonomously · **[AMBIGUITY]** resolved with ration
   (SIMBAD / most FITS convention). If a consumer holds non-J2000 catalogue coordinates, they
   normalize before supplying them (or a future trait extension can carry an epoch).
 
+## Implementation-phase decisions
+
+- **[DECISION] Matching & precession are infallible; two error variants dropped.** Because
+  `Epoch::OfDate` always carries its Julian year, "JNow without a date" is unrepresentable.
+  So `precess`, `rank`, `Matcher::query`, and `is_framed` return values (not `Result`), and
+  the `Error` enum is just `ParseCoord` / `OutOfRange` / `InvalidOptics` — the spec's
+  `MissingObservationDate` / `EpochMismatch` are removed as unreachable. This strengthens the
+  spec's intent (no silent epoch mis-match) via the type system rather than a runtime check.
+  A **minor, strictly-safer deviation** from the literal spec wording (FR-M11); flagged here
+  and in the implementation commit. The spec artifacts still describe the original wording;
+  the contract doc will be reconciled in the polish pass.
+- **[DECISION] `is_framed` is a free function** (plus a thin `Matcher` method) rather than a
+  `Query::IsFramed` variant — a single-object query needs no ranking, so a dedicated entry
+  point is cleaner than threading one object through `rank`.
+- **[DECISION] `Constraint` carries `pixel_scale: Option<(f64,f64)>`.** Pixel offsets need the
+  plate scale, which lives on `Field`, not on the raw `Membership` fov. The `within`/`frame`/
+  `frame_rotated` builders capture it from the `Field`; manual construction leaves it `None`
+  (so pixel offsets are simply absent), matching FR-M7 ("when plate scale is known").
+- **[DECISION] Robust tangent-offset geometry.** Offsets/membership use a polar decomposition
+  of great-circle separation + position angle into East/North (never dividing by cos of the
+  separation), with the circumscribed circle pre-filtering rectangle tests. Exact to planning
+  grade for the small fields involved; robust for far objects returned by unbounded nearest-N.
+- **[DECISION] Exact `ARCSEC_PER_RADIAN`** (206264.806…) replaces alm's rounded `206.265`.
+- **[AMBIGUITY] Binning/FOV model.** `pixels` = the (binned) image dimensions you supply,
+  `pixel_um` = physical unbinned pixel size, `binning` = factor. Effective pixel = pixel×binning,
+  so ×2 binning ⇒ ×2 scale ⇒ ×2 field for a fixed pixel count (matches SC-009). Halve the pixel
+  count for a fixed sensor to keep the field constant.
+
 ## Input needed from you
 
 - **[INPUT-NEEDED] Repo visibility** — confirm public is intended (see first decision). No action
