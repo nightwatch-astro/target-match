@@ -6,11 +6,12 @@
 //! axis-independent (x and y are handled separately). A [`RadiusPolicy`] turns a
 //! field into a search radius.
 
-use crate::angle::Angle;
+use skymath::Angle;
+
 use crate::error::{Error, Result};
 
 /// Exact number of arcseconds in one radian (supersedes the rounded `206.265`).
-pub const ARCSEC_PER_RADIAN: f64 = crate::angle::ARCSEC_PER_RADIAN;
+pub const ARCSEC_PER_RADIAN: f64 = skymath::ARCSEC_PER_RADIAN;
 /// Arcseconds per degree.
 pub const ARCSEC_PER_DEGREE: f64 = 3600.0;
 /// Fallback search radius when a field of view cannot be derived (5°).

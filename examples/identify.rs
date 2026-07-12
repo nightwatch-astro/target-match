@@ -6,7 +6,8 @@
 //! dependency and never appears in the library's public API.
 
 use anyhow::Result;
-use target_match::{rank, Angle, Constraint, Equatorial, Field, Optics, RadiusPolicy, SkyObject};
+use skymath::{Angle, Equatorial, ParseMode};
+use target_match::{rank, Constraint, Field, Optics, RadiusPolicy, SkyObject};
 
 /// A minimal catalogue entry. `target-match` never reads `name` — only `position`.
 struct Target {
@@ -47,7 +48,7 @@ fn main() -> Result<()> {
     ];
 
     // Where the scope pointed (parsed from sexagesimal), and its optics.
-    let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09")?;
+    let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict)?;
     let field = Field::from_optics(Optics {
         focal_mm: 800.0,
         pixel_um: (3.76, 3.76),

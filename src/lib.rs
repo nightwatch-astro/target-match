@@ -11,11 +11,14 @@
 //! its own objects — from a database, a file, a name resolver, or a hand-built
 //! list — by implementing the [`matcher`] module's `SkyObject` trait.
 //!
+//! Coordinate and angle types come from the [`skymath`] crate and appear
+//! directly in this crate's signatures: construct positions with
+//! [`skymath::Equatorial`] and angles with [`skymath::Angle`]. The crate is
+//! re-exported as `target_match::skymath` so consumers can name a
+//! version-matched `skymath` without a separate dependency entry.
+//!
 //! # Modules
 //!
-//! - [`angle`] — angle and equatorial-coordinate primitives: decimal ⇄
-//!   sexagesimal (`HH:MM:SS` / `±DD:MM:SS`) parsing and formatting, and
-//!   great-circle (haversine) angular separation.
 //! - [`optics`] — plate scale and field-of-view geometry from focal length,
 //!   pixel size (x/y), binning (x/y), and sensor dimensions — or a directly
 //!   supplied pixel scale / field of view — plus the search-radius policies.
@@ -25,7 +28,8 @@
 //! # Example
 //!
 //! ```
-//! use target_match::{Angle, Constraint, Equatorial, Field, Optics, RadiusPolicy, SkyObject, rank};
+//! use skymath::{Angle, Equatorial, ParseMode};
+//! use target_match::{rank, Constraint, Field, Optics, RadiusPolicy, SkyObject};
 //!
 //! struct Target { name: &'static str, ra: f64, dec: f64 }
 //! impl SkyObject for Target {
@@ -38,7 +42,7 @@
 //!     Target { name: "M 31",  ra: 10.6847, dec: 41.2688 },
 //!     Target { name: "M 33",  ra: 23.4621, dec: 30.6599 },
 //! ];
-//! let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09").unwrap();
+//! let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
 //! let field = Field::from_optics(Optics {
 //!     focal_mm: 800.0, pixel_um: (3.76, 3.76), binning: (1, 1), pixels: (6248, 4176),
 //! }).unwrap();
@@ -47,12 +51,15 @@
 //! assert_eq!(hits[0].object.name, "M 31");
 //! ```
 
-pub mod angle;
 pub mod error;
 pub mod matcher;
 pub mod optics;
 
-pub use angle::{precess, separation, Angle, Epoch, Equatorial};
+/// The astronomy-math crate whose types appear in this crate's public API,
+/// re-exported so consumers can use the exact version target-match was built
+/// against.
+pub use skymath;
+
 pub use error::{Error, Result};
 pub use matcher::{
     is_framed, rank, Constraint, Match, Matcher, Membership, Offset, Query, SkyObject,

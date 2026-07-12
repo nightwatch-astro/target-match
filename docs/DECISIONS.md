@@ -93,3 +93,23 @@ All open decisions from the v0.1 handover were reviewed and confirmed by the mai
   fallible, acceptable at v0.x. `spec.md` wording intentionally left as the historical record.
 - **License** — stays **Apache-2.0 only**; no dual MIT before a crates.io publish.
 - **Constitution** — left unratified; principles remain in `AGENTS.md`.
+
+## 0.2 — adopt skymath (2026-07-12)
+
+- **[DECIDED earlier, executed now] Hard cut to `skymath`** (ratified during the skymath
+  grilling): the `angle` module (Angle/Epoch/Equatorial, sexagesimal, separation,
+  precession) is deleted; `skymath` types appear directly in public signatures. No
+  compatibility re-exports of individual types; the `skymath` crate itself is re-exported
+  (`target_match::skymath`) for version alignment.
+- **[DECISION] API deltas for consumers**: `Equatorial::parse_j2000(ra, dec)` →
+  `skymath::Equatorial::parse_j2000(ra, dec, ParseMode)` (strict/lenient is now explicit);
+  `Equatorial::new(ra, dec, epoch)` → `at_epoch`; sexagesimal formatting via
+  `SexaStyle`. `target_match::Error` shrinks to `InvalidOptics` — parse/domain errors
+  surface as `skymath::Error` at construction.
+- **[DECISION] Test ownership follows code ownership**: the separation/sexagesimal/
+  precession property tests moved to skymath with the code; this crate keeps
+  matcher/optics coverage (`matcher_equals_rank`, membership geometry, known values).
+- **[RESOLVED] Interim git dependency**: skymath v0.1.0 published to crates.io
+  (2026-07-12); the pin is now `skymath = "0.1"`. (skymath's first publish was local
+  with a token — crates.io Trusted Publishing config can only be added to an existing
+  crate; add the config in both crates' settings so future releases publish via OIDC.)

@@ -8,11 +8,16 @@ designation can be carried on a result for display). The crate holds no
 catalogue data and performs no I/O: callers supply objects by implementing the
 one-method `SkyObject` trait, and the library computes the geometry — angular
 separation, in-frame membership (circular or rectangular, with optional camera
-rotation), tangent-plane offsets, and deterministic ranking. Coordinates accept
-decimal degrees or sexagesimal (`HH:MM:SS` / `±DD:MM:SS`). The field of view
+rotation), tangent-plane offsets, and deterministic ranking. The field of view
 can be computed from optics (focal length, pixel size, binning, sensor
-dimensions), from a pixel scale, or supplied directly. JNow ↔ J2000 precession
-is included.
+dimensions), from a pixel scale, or supplied directly. Pointings at any epoch
+are precessed to J2000 before matching.
+
+Coordinate and angle types come from the
+[`skymath`](https://github.com/nightwatch-astro/skymath) crate and appear
+directly in this crate's API (`skymath::Equatorial`, `skymath::Angle` — with
+decimal and strict/lenient sexagesimal parsing); `skymath` is re-exported as
+`target_match::skymath` so a version-matched copy is always available.
 
 API documentation, generated from the source on every release:
 [docs.rs/target-match](https://docs.rs/target-match).
@@ -21,11 +26,12 @@ API documentation, generated from the source on every release:
 
 ```toml
 [dependencies]
-target-match = "0.1"
+target-match = "0.2"
 ```
 
 ```rust
-use target_match::{rank, Angle, Constraint, Equatorial, Field, Optics, RadiusPolicy, SkyObject};
+use skymath::{Angle, Equatorial, ParseMode};
+use target_match::{rank, Constraint, Field, Optics, RadiusPolicy, SkyObject};
 
 // Your catalogue type — target-match owns no catalogue data, and never reads the name.
 struct Target { name: &'static str, ra_deg: f64, dec_deg: f64 }
@@ -41,7 +47,7 @@ let catalog = [
 ];
 
 // Where the scope pointed (decimal degrees or sexagesimal)...
-let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09").unwrap();
+let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
 
 // ...and how much sky the frame covers (from optics, a pixel scale, or a direct FOV).
 let field = Field::from_optics(Optics {
@@ -61,7 +67,8 @@ demo.
 ## Features
 
 - `serde` *(off by default)* — derives `Serialize`/`Deserialize` on the public
-  coordinate and match types.
+  match types, and forwards to `skymath/serde` for the coordinate types they
+  embed.
 
 ## Development
 
