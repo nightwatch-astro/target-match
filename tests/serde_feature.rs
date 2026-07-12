@@ -2,11 +2,13 @@
 //! Only compiled/run with `--features serde`.
 #![cfg(feature = "serde")]
 
-use target_match::{Angle, Epoch, Equatorial, Membership, Optics, RadiusPolicy};
+use skymath::{Angle, Epoch, Equatorial};
+use target_match::{Membership, Optics, RadiusPolicy};
 
 #[test]
 fn public_types_round_trip_through_json() {
-    let pos = Equatorial::new(
+    // Coordinate types come from skymath (the feature forwards to skymath/serde).
+    let pos = Equatorial::at_epoch(
         Angle::from_degrees(10.6847),
         Angle::from_degrees(41.2688),
         Epoch::OfDate(2026.5),

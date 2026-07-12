@@ -8,16 +8,18 @@
 //!
 //! # Geometry
 //!
-//! Matching precesses the pointing to J2000, then works in the local tangent frame
-//! about the pointing: an object's offset is decomposed from its great-circle
-//! separation and position angle (East of North) into East/North components, which
-//! are rotated into the camera frame for rectangular membership. The circumscribed
-//! circle pre-filters both rectangle tests, so the tangent decomposition is only
-//! evaluated for objects near the frame — never on the far side of the sky.
+//! Matching precesses the pointing to J2000 (via [`skymath::precess`]), then works
+//! in the local tangent frame about the pointing: an object's offset is decomposed
+//! from its great-circle separation and position angle (East of North, both from
+//! `skymath`) into East/North components, which are rotated into the camera frame
+//! for rectangular membership. The circumscribed circle pre-filters both rectangle
+//! tests, so the tangent decomposition is only evaluated for objects near the
+//! frame — never on the far side of the sky.
 
 use core::cmp::Ordering;
 
-use crate::angle::{precess, separation, Angle, Epoch, Equatorial};
+use skymath::{position_angle, precess, separation, Angle, Epoch, Equatorial};
+
 use crate::optics::{Field, RadiusPolicy};
 
 /// A catalogue object that can be matched by sky position.
@@ -185,18 +187,11 @@ pub struct Match<'a, T> {
     pub position_angle: Angle,
 }
 
-/// Position angle from `center` to `obj`, measured East of North, in `[0, 360)`°.
-fn position_angle(center: Equatorial, obj: Equatorial) -> Angle {
-    let (a0, d0) = (center.ra().radians(), center.dec().radians());
-    let (a, d) = (obj.ra().radians(), obj.dec().radians());
-    let da = a - a0;
-    let y = d.cos() * da.sin();
-    let x = d0.cos() * d.sin() - d0.sin() * d.cos() * da.cos();
-    Angle::from_radians(y.atan2(x)).normalized_0_360()
-}
-
-/// Tangent-frame `(East, North)` offset in radians, from separation and PA.
-fn tangent_offset(sep: Angle, pa: Angle) -> (f64, f64) {
+/// Tangent-frame `(East, North)` offset in radians, decomposed from an
+/// already-computed separation and position angle (the polar decomposition
+/// `skymath::tangent_offset` performs, reusing this evaluation's sep/PA
+/// instead of recomputing them).
+fn tangent_components(sep: Angle, pa: Angle) -> (f64, f64) {
     let (s, r) = (pa.radians(), sep.radians());
     (r * s.sin(), r * s.cos())
 }
@@ -276,7 +271,7 @@ fn evaluate<'a, T: SkyObject>(
     let pos = obj.position();
     let sep = separation(pointing, pos);
     let pa = position_angle(pointing, pos);
-    let (east, north) = tangent_offset(sep, pa);
+    let (east, north) = tangent_components(sep, pa);
     Match {
         object: obj,
         separation: sep,

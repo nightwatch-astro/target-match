@@ -1,6 +1,7 @@
 //! Known-value integration tests (SC-001, SC-005, SC-006).
 
-use target_match::{rank, Angle, Constraint, Equatorial, Field, Optics, RadiusPolicy, SkyObject};
+use skymath::{Angle, Equatorial, ParseMode};
+use target_match::{rank, Constraint, Field, Optics, RadiusPolicy, SkyObject};
 
 struct T {
     name: &'static str,
@@ -49,7 +50,7 @@ fn andromeda_field() -> Vec<T> {
 fn m31_identified_from_pointing_and_optics() {
     // SC-001: nearest catalogued object a frame captured.
     let catalog = andromeda_field();
-    let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09").unwrap();
+    let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
     let field = Field::from_optics(Optics {
         focal_mm: 800.0,
         pixel_um: (3.76, 3.76),

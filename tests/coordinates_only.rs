@@ -1,6 +1,7 @@
 //! SC-010 / FR-X5: matching is decided by coordinates, never by a name.
 
-use target_match::{rank, Angle, Constraint, Equatorial, SkyObject};
+use skymath::{Angle, Equatorial};
+use target_match::{rank, Constraint, SkyObject};
 
 struct Named {
     name: &'static str,

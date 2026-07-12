@@ -17,20 +17,24 @@ categories = ["science", "mathematics"]
 all-features = true
 
 [features]
-# Off by default. Derives Serialize/Deserialize on the public coordinate and
-# match types so positions/results can be (de)serialized to JSON and other
-# formats. Zero cost for consumers who don't opt in.
-serde = ["dep:serde"]
+# Off by default. Derives Serialize/Deserialize on the public match types (and,
+# via skymath, the coordinate types they embed) so positions/results can be
+# (de)serialized to JSON and other formats. Zero cost for consumers who don't opt in.
+serde = ["dep:serde", "skymath/serde"]
 
 [dependencies]
+# Shared astronomy math: Angle/Equatorial/Epoch, sexagesimal parsing, spherical
+# geometry, precession. target-match's public API uses these types directly.
+# TODO(release): switch to `skymath = "0.1"` once skymath v0.1.0 is on crates.io
+# (the branch pin exists only while skymath PR #1 awaits merge).
+skymath = { git = "https://github.com/nightwatch-astro/skymath", branch = "001-skymath-core" }
 # Typed public error enum. Pure-Rust, proc-macro only — no runtime weight.
 thiserror = "2"
 # Optional, off by default: derives Serialize/Deserialize on public data types.
 serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
-# Property-based testing of the geometric invariants (separation symmetry,
-# radius-boundary inclusivity, sexagesimal / precession round-trip, matcher==rank).
+# Property-based testing of the matcher invariants (matcher==rank equivalence).
 proptest = "1"
 # Application-style error handling in the example only (never the public API).
 anyhow = "1"
