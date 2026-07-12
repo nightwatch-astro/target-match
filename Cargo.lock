@@ -325,7 +325,7 @@ dependencies = [
 [[package]]
 name = "skymath"
 version = "0.0.0"
-source = "git+https://github.com/nightwatch-astro/skymath?branch=001-skymath-core#f48695840e374bf1679606712f0de7a91b056c22"
+source = "git+https://github.com/nightwatch-astro/skymath?branch=001-skymath-core#dfa71970a6324fb6d30d019c6f7623a56e57e150"
 dependencies = [
  "serde",
  "thiserror",
