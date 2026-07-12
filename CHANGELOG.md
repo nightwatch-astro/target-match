@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0](https://github.com/nightwatch-astro/target-match/compare/v0.2.0...v0.3.0) (2026-07-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* public API types now come from skymath 0.3; consumers on skymath 0.1 must bump their own skymath dependency to match.
+
+### Features
+
+* move to skymath 0.3 shared types ([#6](https://github.com/nightwatch-astro/target-match/issues/6)) ([e8179cc](https://github.com/nightwatch-astro/target-match/commit/e8179cc4f2346545140ea29386c82bf62c69d7b5))
+
 ## [0.2.0](https://github.com/nightwatch-astro/target-match/compare/v0.1.0...v0.2.0) (2026-07-12)
 
 
