@@ -324,8 +324,9 @@ dependencies = [
 
 [[package]]
 name = "skymath"
-version = "0.0.0"
-source = "git+https://github.com/nightwatch-astro/skymath?branch=001-skymath-core#dfa71970a6324fb6d30d019c6f7623a56e57e150"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6315a9ee05a1b250fb7562b5a057342352ae7db06dc924ebfe3d0c90506db0d3"
 dependencies = [
  "serde",
  "thiserror",

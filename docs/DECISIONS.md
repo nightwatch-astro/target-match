@@ -109,6 +109,7 @@ All open decisions from the v0.1 handover were reviewed and confirmed by the mai
 - **[DECISION] Test ownership follows code ownership**: the separation/sexagesimal/
   precession property tests moved to skymath with the code; this crate keeps
   matcher/optics coverage (`matcher_equals_rank`, membership geometry, known values).
-- **[ASSUMPTION] Interim git dependency** on skymath branch `001-skymath-core`
-  (its PR #1 pending); must switch to `skymath = "0.1"` from crates.io before this
-  branch merges — a crates.io release cannot carry a git dependency.
+- **[RESOLVED] Interim git dependency**: skymath v0.1.0 published to crates.io
+  (2026-07-12); the pin is now `skymath = "0.1"`. (skymath's first publish was local
+  with a token — crates.io Trusted Publishing config can only be added to an existing
+  crate; add the config in both crates' settings so future releases publish via OIDC.)

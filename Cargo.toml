@@ -25,9 +25,7 @@ serde = ["dep:serde", "skymath/serde"]
 [dependencies]
 # Shared astronomy math: Angle/Equatorial/Epoch, sexagesimal parsing, spherical
 # geometry, precession. target-match's public API uses these types directly.
-# TODO(release): switch to `skymath = "0.1"` once skymath v0.1.0 is on crates.io
-# (the branch pin exists only while skymath PR #1 awaits merge).
-skymath = { git = "https://github.com/nightwatch-astro/skymath", branch = "001-skymath-core" }
+skymath = "0.1"
 # Typed public error enum. Pure-Rust, proc-macro only — no runtime weight.
 thiserror = "2"
 # Optional, off by default: derives Serialize/Deserialize on public data types.
