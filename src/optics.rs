@@ -19,6 +19,23 @@ pub const DEFAULT_FALLBACK_RADIUS: Angle = Angle::from_radians(5.0 * core::f64::
 
 /// Full optical train: focal length, per-axis pixel size, per-axis binning, and
 /// sensor pixel counts.
+///
+/// Pass to [`Field::from_optics`] to derive a [`Field`].
+///
+/// # Example
+///
+/// ```
+/// use target_match::{Field, Optics};
+///
+/// let field = Field::from_optics(Optics {
+///     focal_mm: 800.0,
+///     pixel_um: (3.76, 3.76),
+///     binning: (1, 1),
+///     pixels: (6248, 4176),
+/// })
+/// .unwrap();
+/// assert!((field.width().degrees() - 1.683).abs() < 1e-2);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Optics {
@@ -33,6 +50,21 @@ pub struct Optics {
 }
 
 /// How a search radius is derived from a [`Field`].
+///
+/// Passed to [`Field::radius`], or embedded in a [`Constraint`](crate::Constraint)
+/// via [`Constraint::within`](crate::Constraint::within).
+///
+/// # Example
+///
+/// ```
+/// use skymath::Angle;
+/// use target_match::{Field, RadiusPolicy};
+///
+/// let field = Field::from_fov(Angle::from_degrees(2.0), Angle::from_degrees(1.0)).unwrap();
+/// let circumscribed = field.radius(RadiusPolicy::Circumscribed);
+/// let inscribed = field.radius(RadiusPolicy::Inscribed);
+/// assert!(circumscribed.degrees() > inscribed.degrees(), "circumscribed bounds the whole frame");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum RadiusPolicy {
@@ -47,6 +79,31 @@ pub enum RadiusPolicy {
 }
 
 /// The angular extent of a frame.
+///
+/// Feed a `Field` to [`Constraint::within`](crate::Constraint::within) (circular
+/// membership sized by a [`RadiusPolicy`]) or
+/// [`Constraint::frame`](crate::Constraint::frame) (rectangular membership) to
+/// build a search [`Constraint`](crate::Constraint).
+///
+/// # Example
+///
+/// ```
+/// use target_match::{Field, Optics, RadiusPolicy};
+///
+/// let field = Field::from_optics(Optics {
+///     focal_mm: 800.0,
+///     pixel_um: (3.76, 3.76),
+///     binning: (1, 1),
+///     pixels: (6248, 4176),
+/// })
+/// .unwrap();
+///
+/// assert!(field.width().degrees() > 0.0);
+/// assert!(field.height().degrees() > 0.0);
+/// assert!(field.diagonal().degrees() > field.width().degrees());
+/// assert!(field.pixel_scale().is_some(), "derived from optics, so plate scale is known");
+/// let _radius = field.radius(RadiusPolicy::Circumscribed);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Field {

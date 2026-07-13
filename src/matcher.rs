@@ -55,6 +55,33 @@ pub enum Membership {
 }
 
 /// What to return from a match.
+///
+/// Set on a [`Constraint`] via [`Constraint::all`], [`Constraint::nearest_one`],
+/// [`Constraint::nearest_n`], or [`Constraint::nearest_n_within`].
+///
+/// # Example
+///
+/// ```
+/// use skymath::{Angle, Equatorial, ParseMode};
+/// use target_match::{rank, Constraint, SkyObject};
+///
+/// struct Target {
+///     ra: f64,
+///     dec: f64,
+/// }
+/// impl SkyObject for Target {
+///     fn position(&self) -> Equatorial {
+///         Equatorial::j2000(Angle::from_degrees(self.ra), Angle::from_degrees(self.dec)).unwrap()
+///     }
+/// }
+///
+/// let catalog = [Target { ra: 10.6847, dec: 41.2688 }];
+/// let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
+///
+/// // `nearest_n(1)` sets the query to `Query::NearestN { n: 1, .. }`.
+/// let hits = rank(pointing, &catalog, Constraint::circular(Angle::from_degrees(1.0)).nearest_n(1));
+/// assert_eq!(hits.len(), 1);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Query {
@@ -71,8 +98,46 @@ pub enum Query {
     },
 }
 
-/// A membership shape combined with a query mode (and the plate scale, when known,
-/// so pixel offsets can be reported).
+/// A [`Membership`] shape combined with a [`Query`] mode (and the plate scale,
+/// when known, so pixel offsets can be reported).
+///
+/// Build one with a shape constructor ([`within`](Constraint::within),
+/// [`circular`](Constraint::circular), [`frame`](Constraint::frame),
+/// [`frame_rotated`](Constraint::frame_rotated)), then optionally switch the
+/// query mode ([`all`](Constraint::all), [`nearest_one`](Constraint::nearest_one),
+/// [`nearest_n`](Constraint::nearest_n),
+/// [`nearest_n_within`](Constraint::nearest_n_within)). Pass the result to
+/// [`rank`], [`Matcher::query`], or [`is_framed`].
+///
+/// # Example
+///
+/// ```
+/// use skymath::{Angle, Equatorial, ParseMode};
+/// use target_match::{rank, Constraint, Field, Optics, RadiusPolicy, SkyObject};
+///
+/// struct Target {
+///     ra: f64,
+///     dec: f64,
+/// }
+/// impl SkyObject for Target {
+///     fn position(&self) -> Equatorial {
+///         Equatorial::j2000(Angle::from_degrees(self.ra), Angle::from_degrees(self.dec)).unwrap()
+///     }
+/// }
+///
+/// let catalog = [Target { ra: 10.6847, dec: 41.2688 }];
+/// let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
+/// let field = Field::from_optics(Optics {
+///     focal_mm: 800.0,
+///     pixel_um: (3.76, 3.76),
+///     binning: (1, 1),
+///     pixels: (6248, 4176),
+/// })
+/// .unwrap();
+///
+/// let c = Constraint::within(&field, RadiusPolicy::Circumscribed).nearest_one();
+/// assert_eq!(rank(pointing, &catalog, c).len(), 1);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Constraint {
@@ -86,6 +151,22 @@ pub struct Constraint {
 
 impl Constraint {
     /// Circular membership with a radius derived from a field under `policy`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use target_match::{Constraint, Field, Optics, RadiusPolicy};
+    ///
+    /// let field = Field::from_optics(Optics {
+    ///     focal_mm: 800.0,
+    ///     pixel_um: (3.76, 3.76),
+    ///     binning: (1, 1),
+    ///     pixels: (6248, 4176),
+    /// })
+    /// .unwrap();
+    /// let c = Constraint::within(&field, RadiusPolicy::Circumscribed);
+    /// assert!(c.pixel_scale.is_some(), "the field's plate scale carries through");
+    /// ```
     #[must_use]
     pub fn within(field: &Field, policy: RadiusPolicy) -> Self {
         Self {
@@ -97,6 +178,16 @@ impl Constraint {
         }
     }
     /// Circular membership with an explicit radius (no plate scale).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::Angle;
+    /// use target_match::Constraint;
+    ///
+    /// let c = Constraint::circular(Angle::from_degrees(2.0));
+    /// assert!(c.pixel_scale.is_none(), "no `Field`, so no plate scale");
+    /// ```
     #[must_use]
     pub fn circular(radius: Angle) -> Self {
         Self {
@@ -106,6 +197,22 @@ impl Constraint {
         }
     }
     /// Axis-aligned rectangular membership from a field's width×height.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use target_match::{Constraint, Field, Membership, Optics};
+    ///
+    /// let field = Field::from_optics(Optics {
+    ///     focal_mm: 800.0,
+    ///     pixel_um: (3.76, 3.76),
+    ///     binning: (1, 1),
+    ///     pixels: (6248, 4176),
+    /// })
+    /// .unwrap();
+    /// let c = Constraint::frame(&field);
+    /// assert!(matches!(c.membership, Membership::Rectangle { .. }));
+    /// ```
     #[must_use]
     pub fn frame(field: &Field) -> Self {
         Self {
@@ -117,6 +224,23 @@ impl Constraint {
         }
     }
     /// Rotated rectangular membership from a field and a camera position angle.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::Angle;
+    /// use target_match::{Constraint, Field, Membership, Optics};
+    ///
+    /// let field = Field::from_optics(Optics {
+    ///     focal_mm: 800.0,
+    ///     pixel_um: (3.76, 3.76),
+    ///     binning: (1, 1),
+    ///     pixels: (6248, 4176),
+    /// })
+    /// .unwrap();
+    /// let c = Constraint::frame_rotated(&field, Angle::from_degrees(15.0));
+    /// assert!(matches!(c.membership, Membership::Rotated { .. }));
+    /// ```
     #[must_use]
     pub fn frame_rotated(field: &Field, position_angle: Angle) -> Self {
         Self {
@@ -129,18 +253,48 @@ impl Constraint {
         }
     }
     /// Set the query to all-within-field.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::Angle;
+    /// use target_match::{Constraint, Query};
+    ///
+    /// let c = Constraint::circular(Angle::from_degrees(1.0)).nearest_one().all();
+    /// assert_eq!(c.query, Query::AllWithinField);
+    /// ```
     #[must_use]
     pub fn all(mut self) -> Self {
         self.query = Query::AllWithinField;
         self
     }
     /// Set the query to nearest-one.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::Angle;
+    /// use target_match::{Constraint, Query};
+    ///
+    /// let c = Constraint::circular(Angle::from_degrees(1.0)).nearest_one();
+    /// assert_eq!(c.query, Query::NearestOne);
+    /// ```
     #[must_use]
     pub fn nearest_one(mut self) -> Self {
         self.query = Query::NearestOne;
         self
     }
     /// Set the query to the `n` nearest (unbounded).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::Angle;
+    /// use target_match::{Constraint, Query};
+    ///
+    /// let c = Constraint::circular(Angle::from_degrees(1.0)).nearest_n(3);
+    /// assert_eq!(c.query, Query::NearestN { n: 3, max_radius: None });
+    /// ```
     #[must_use]
     pub fn nearest_n(mut self, n: usize) -> Self {
         self.query = Query::NearestN {
@@ -150,6 +304,17 @@ impl Constraint {
         self
     }
     /// Set the query to the `n` nearest within `max_radius`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::Angle;
+    /// use target_match::{Constraint, Query};
+    ///
+    /// let radius = Angle::from_degrees(1.0);
+    /// let c = Constraint::circular(radius).nearest_n_within(3, radius);
+    /// assert_eq!(c.query, Query::NearestN { n: 3, max_radius: Some(radius) });
+    /// ```
     #[must_use]
     pub fn nearest_n_within(mut self, n: usize, max_radius: Angle) -> Self {
         self.query = Query::NearestN {
@@ -161,6 +326,42 @@ impl Constraint {
 }
 
 /// The offset of a matched object relative to the frame centre.
+///
+/// Carried on every [`Match`]. `frame` and `pixels` are only populated for
+/// rectangular [`Membership`] (see [`Constraint::frame`],
+/// [`Constraint::frame_rotated`]) — circular membership has no frame axes.
+///
+/// # Example
+///
+/// ```
+/// use skymath::{Angle, Equatorial, ParseMode};
+/// use target_match::{rank, Constraint, Field, Optics, SkyObject};
+///
+/// struct Target {
+///     ra: f64,
+///     dec: f64,
+/// }
+/// impl SkyObject for Target {
+///     fn position(&self) -> Equatorial {
+///         Equatorial::j2000(Angle::from_degrees(self.ra), Angle::from_degrees(self.dec)).unwrap()
+///     }
+/// }
+///
+/// let catalog = [Target { ra: 10.6847, dec: 41.2688 }];
+/// let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
+/// let field = Field::from_optics(Optics {
+///     focal_mm: 800.0,
+///     pixel_um: (3.76, 3.76),
+///     binning: (1, 1),
+///     pixels: (6248, 4176),
+/// })
+/// .unwrap();
+///
+/// let hits = rank(pointing, &catalog, Constraint::frame(&field));
+/// let offset = hits[0].offset;
+/// assert!(offset.frame.is_some(), "rectangular membership reports a frame-aligned offset");
+/// assert!(offset.pixels.is_some(), "plate scale from `Optics` fills the pixel offset");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Offset {
@@ -173,6 +374,42 @@ pub struct Offset {
 }
 
 /// A ranked match: a borrowed catalogue object plus its computed geometry.
+///
+/// Returned by [`rank`], [`Matcher::query`], and [`is_framed`].
+///
+/// # Example
+///
+/// ```
+/// use skymath::{Angle, Equatorial, ParseMode};
+/// use target_match::{rank, Constraint, Field, Optics, RadiusPolicy, SkyObject};
+///
+/// struct Target {
+///     name: &'static str,
+///     ra: f64,
+///     dec: f64,
+/// }
+/// impl SkyObject for Target {
+///     fn position(&self) -> Equatorial {
+///         Equatorial::j2000(Angle::from_degrees(self.ra), Angle::from_degrees(self.dec)).unwrap()
+///     }
+/// }
+///
+/// let catalog = [Target { name: "M 31", ra: 10.6847, dec: 41.2688 }];
+/// let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
+/// let field = Field::from_optics(Optics {
+///     focal_mm: 800.0,
+///     pixel_um: (3.76, 3.76),
+///     binning: (1, 1),
+///     pixels: (6248, 4176),
+/// })
+/// .unwrap();
+///
+/// let hits = rank(pointing, &catalog, Constraint::within(&field, RadiusPolicy::Circumscribed));
+/// let m = &hits[0];
+/// assert_eq!(m.object.name, "M 31");
+/// assert!(m.in_frame);
+/// assert!(m.separation.arcseconds() < 2.0);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Match<'a, T> {
     /// The matched object, borrowed from the caller's slice or the [`Matcher`].
@@ -323,7 +560,42 @@ where
 /// Rank a slice of objects against a pointing under a constraint (stateless scan).
 ///
 /// The pointing is precessed to J2000 first. Results are ascending by separation
-/// with ties broken by input order.
+/// with ties broken by input order. For repeated queries against one catalogue,
+/// build a [`Matcher`] instead — it returns identical results faster.
+///
+/// # Example
+///
+/// ```
+/// use skymath::{Angle, Equatorial, ParseMode};
+/// use target_match::{rank, Constraint, Field, Optics, RadiusPolicy, SkyObject};
+///
+/// struct Target {
+///     name: &'static str,
+///     ra: f64,
+///     dec: f64,
+/// }
+/// impl SkyObject for Target {
+///     fn position(&self) -> Equatorial {
+///         Equatorial::j2000(Angle::from_degrees(self.ra), Angle::from_degrees(self.dec)).unwrap()
+///     }
+/// }
+///
+/// let catalog = [
+///     Target { name: "M 31", ra: 10.6847, dec: 41.2688 },
+///     Target { name: "M 33", ra: 23.4621, dec: 30.6599 },
+/// ];
+/// let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
+/// let field = Field::from_optics(Optics {
+///     focal_mm: 800.0,
+///     pixel_um: (3.76, 3.76),
+///     binning: (1, 1),
+///     pixels: (6248, 4176),
+/// })
+/// .unwrap();
+///
+/// let hits = rank(pointing, &catalog, Constraint::within(&field, RadiusPolicy::Circumscribed).nearest_one());
+/// assert_eq!(hits[0].object.name, "M 31");
+/// ```
 #[must_use]
 pub fn rank<T: SkyObject>(pointing: Equatorial, objects: &[T], c: Constraint) -> Vec<Match<'_, T>> {
     let p = precess(pointing, Epoch::J2000);
@@ -334,6 +606,29 @@ pub fn rank<T: SkyObject>(pointing: Equatorial, objects: &[T], c: Constraint) ->
 ///
 /// The pointing is precessed to J2000 first. Unlike [`rank`], no filtering or
 /// ranking is applied — the returned [`Match`] always describes `object`.
+///
+/// # Example
+///
+/// ```
+/// use skymath::{Angle, Equatorial, ParseMode};
+/// use target_match::{is_framed, Membership, SkyObject};
+///
+/// struct Target {
+///     ra: f64,
+///     dec: f64,
+/// }
+/// impl SkyObject for Target {
+///     fn position(&self) -> Equatorial {
+///         Equatorial::j2000(Angle::from_degrees(self.ra), Angle::from_degrees(self.dec)).unwrap()
+///     }
+/// }
+///
+/// let m31 = Target { ra: 10.6847, dec: 41.2688 };
+/// let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
+///
+/// let m = is_framed(pointing, &m31, Membership::Circular { radius: Angle::from_degrees(1.0) });
+/// assert!(m.in_frame);
+/// ```
 #[must_use]
 pub fn is_framed<T: SkyObject>(
     pointing: Equatorial,
@@ -349,6 +644,49 @@ pub fn is_framed<T: SkyObject>(
 /// Produces results identical to [`rank`] for the same objects, pointing, and
 /// constraint — the index is a performance optimization only. Build it once, then
 /// [`query`](Matcher::query) many pointings.
+///
+/// # Example
+///
+/// ```
+/// use skymath::{Angle, Equatorial, ParseMode};
+/// use target_match::{Constraint, Field, Matcher, Membership, Optics, RadiusPolicy, SkyObject};
+///
+/// struct Target {
+///     name: &'static str,
+///     ra: f64,
+///     dec: f64,
+/// }
+/// impl SkyObject for Target {
+///     fn position(&self) -> Equatorial {
+///         Equatorial::j2000(Angle::from_degrees(self.ra), Angle::from_degrees(self.dec)).unwrap()
+///     }
+/// }
+///
+/// let matcher = Matcher::from_objects(vec![
+///     Target { name: "M 31", ra: 10.6847, dec: 41.2688 },
+///     Target { name: "M 33", ra: 23.4621, dec: 30.6599 },
+/// ]);
+/// assert_eq!(matcher.objects().len(), 2);
+///
+/// let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
+/// let field = Field::from_optics(Optics {
+///     focal_mm: 800.0,
+///     pixel_um: (3.76, 3.76),
+///     binning: (1, 1),
+///     pixels: (6248, 4176),
+/// })
+/// .unwrap();
+///
+/// let hits = matcher.query(pointing, Constraint::within(&field, RadiusPolicy::Circumscribed).nearest_one());
+/// assert_eq!(hits[0].object.name, "M 31");
+///
+/// let m = matcher.is_framed(
+///     pointing,
+///     &matcher.objects()[0],
+///     Membership::Circular { radius: Angle::from_degrees(1.0) },
+/// );
+/// assert!(m.in_frame);
+/// ```
 pub struct Matcher<T> {
     storage: Vec<T>,
     /// `(declination_degrees, original_index)` sorted by declination.
