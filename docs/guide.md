@@ -4,8 +4,9 @@ A task-oriented walkthrough of `target-match`. Every snippet below uses the
 same fixture: a pointing at Messier 31 (`00:42:44.3 +41:16:09`) and a frame
 from an 800 mm scope with a 3.76 µm, 6248×4176 sensor. It is the same fixture
 used in the [crate-level doctest](https://docs.rs/target-match/latest/target_match/)
-and in [`examples/identify.rs`](../examples/identify.rs) — run the full
-program with `cargo run --example identify`.
+and in
+[`examples/identify.rs`](https://github.com/nightwatch-astro/target-match/blob/main/examples/identify.rs)
+— run the full program with `cargo run --example identify`.
 
 ## Install
 
@@ -280,9 +281,9 @@ assert_eq!(hits[0].object.name, "M 31");
 
 ## Full example
 
-[`examples/identify.rs`](../examples/identify.rs) runs this same fixture
-end-to-end, printing the frame size, every catalogued object on it, and the
-best target:
+[`examples/identify.rs`](https://github.com/nightwatch-astro/target-match/blob/main/examples/identify.rs)
+runs this same fixture end-to-end, printing the frame size, every catalogued
+object on it, and the best target:
 
 ```sh
 cargo run --example identify

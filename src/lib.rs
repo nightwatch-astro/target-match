@@ -1,21 +1,4 @@
-//! Identify which catalogued sky objects a telescope frame covers, given a
-//! pointing (right ascension / declination) and a field of view (derived from
-//! optics, or supplied directly).
-//!
-//! A caller-supplied set of catalogue objects is ranked by angular separation
-//! from the pointing; objects inside the frame's membership shape are flagged.
-//! Matching uses sky position only — a designation may ride along on a result
-//! for display, but it never influences the match.
-//!
-//! The crate holds no catalogue data and performs no I/O. A consumer supplies
-//! its own objects — from a database, a file, a name resolver, or a hand-built
-//! list — by implementing the [`matcher`] module's `SkyObject` trait.
-//!
-//! Coordinate and angle types come from the [`skymath`] crate and appear
-//! directly in this crate's signatures: construct positions with
-//! [`skymath::Equatorial`] and angles with [`skymath::Angle`]. The crate is
-//! re-exported as `target_match::skymath` so consumers can name a
-//! version-matched `skymath` without a separate dependency entry.
+#![doc = include_str!("../README.md")]
 //!
 //! # Modules
 //!
@@ -24,36 +7,18 @@
 //!   supplied pixel scale / field of view — plus the search-radius policies.
 //! - [`matcher`] — the `SkyObject` input trait, match constraints (radius,
 //!   rectangular field of view, nearest-N), and deterministic ranking.
-//!
-//! # Example
-//!
-//! ```
-//! use skymath::{Angle, Equatorial, ParseMode};
-//! use target_match::{rank, Constraint, Field, Optics, RadiusPolicy, SkyObject};
-//!
-//! struct Target { name: &'static str, ra: f64, dec: f64 }
-//! impl SkyObject for Target {
-//!     fn position(&self) -> Equatorial {
-//!         Equatorial::j2000(Angle::from_degrees(self.ra), Angle::from_degrees(self.dec)).unwrap()
-//!     }
-//! }
-//!
-//! let catalog = [
-//!     Target { name: "M 31",  ra: 10.6847, dec: 41.2688 },
-//!     Target { name: "M 33",  ra: 23.4621, dec: 30.6599 },
-//! ];
-//! let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
-//! let field = Field::from_optics(Optics {
-//!     focal_mm: 800.0, pixel_um: (3.76, 3.76), binning: (1, 1), pixels: (6248, 4176),
-//! }).unwrap();
-//!
-//! let hits = rank(pointing, &catalog, Constraint::within(&field, RadiusPolicy::Circumscribed).nearest_one());
-//! assert_eq!(hits[0].object.name, "M 31");
-//! ```
+//! - [`guide`] — a task-oriented walkthrough, from implementing `SkyObject`
+//!   through repeated queries with `Matcher`.
 
 pub mod error;
 pub mod matcher;
 pub mod optics;
+
+/// A task-oriented walkthrough of `target-match`, from implementing
+/// [`SkyObject`] through repeated queries with [`Matcher`]. Source:
+/// [`docs/guide.md`](https://github.com/nightwatch-astro/target-match/blob/main/docs/guide.md).
+#[doc = include_str!("../docs/guide.md")]
+pub mod guide {}
 
 /// The astronomy-math crate whose types appear in this crate's public API,
 /// re-exported so consumers can use the exact version target-match was built

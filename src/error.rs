@@ -9,6 +9,18 @@
 use thiserror::Error;
 
 /// Everything that can go wrong constructing `target-match` values.
+///
+/// # Example
+///
+/// ```
+/// use target_match::{Error, Field, Optics};
+///
+/// let err = Field::from_optics(Optics {
+///     focal_mm: 0.0, pixel_um: (3.76, 3.76), binning: (1, 1), pixels: (6248, 4176),
+/// })
+/// .unwrap_err();
+/// assert!(matches!(err, Error::InvalidOptics(_)));
+/// ```
 #[derive(Debug, Clone, PartialEq, Error)]
 #[non_exhaustive]
 pub enum Error {
