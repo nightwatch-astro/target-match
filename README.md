@@ -67,6 +67,15 @@ let hits = rank(pointing, &catalog, Constraint::within(&field, RadiusPolicy::Cir
 assert_eq!(hits[0].object.name, "M 31");
 ```
 
+Each hit is a
+[`Match`](https://docs.rs/target-match/latest/target_match/struct.Match.html)
+carrying the borrowed object, its separation, in-frame flag, offset, and
+position angle. The
+[`Query`](https://docs.rs/target-match/latest/target_match/enum.Query.html)
+mode on the constraint selects all-within-field, nearest-one, or nearest-N.
+To test a single object without ranking a catalogue, call
+[`is_framed`](https://docs.rs/target-match/latest/target_match/fn.is_framed.html).
+
 For a batch of frames against one catalogue, build the index once with
 [`Matcher::from_objects`](https://docs.rs/target-match/latest/target_match/struct.Matcher.html#method.from_objects)`(..)`
 and call

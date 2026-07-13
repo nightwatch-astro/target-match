@@ -60,10 +60,17 @@ pub mod optics;
 /// against.
 pub use skymath;
 
+// `#[doc(inline)]` puts each item's canonical rustdoc page at the crate root
+// (`target_match::Foo`), matching how these re-exports are used. Without it,
+// because the source modules are public, rustdoc keeps the page under the
+// submodule path (`target_match/matcher/…`) and crate-root links 404.
+#[doc(inline)]
 pub use error::{Error, Result};
+#[doc(inline)]
 pub use matcher::{
     is_framed, rank, Constraint, Match, Matcher, Membership, Offset, Query, SkyObject,
 };
+#[doc(inline)]
 pub use optics::{
     Field, Optics, RadiusPolicy, ARCSEC_PER_DEGREE, ARCSEC_PER_RADIAN, DEFAULT_FALLBACK_RADIUS,
 };

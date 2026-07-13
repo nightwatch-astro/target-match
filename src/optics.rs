@@ -118,6 +118,22 @@ impl Field {
     /// (arcsec/px) = effective pixel size (mm) / focal length (mm) × arcsec/radian;
     /// field extent = pixel scale × pixel count.
     ///
+    /// # Example
+    ///
+    /// ```
+    /// use target_match::{Field, Optics};
+    ///
+    /// let field = Field::from_optics(Optics {
+    ///     focal_mm: 800.0,
+    ///     pixel_um: (3.76, 3.76),
+    ///     binning: (1, 1),
+    ///     pixels: (6248, 4176),
+    /// })
+    /// .unwrap();
+    /// let (sx, _) = field.pixel_scale().unwrap();
+    /// assert!((sx - 0.969).abs() < 1e-2, "≈0.969 arcsec/px");
+    /// ```
+    ///
     /// # Errors
     /// [`Error::InvalidOptics`] if any input is non-positive or non-finite.
     pub fn from_optics(o: Optics) -> Result<Self> {
@@ -149,6 +165,16 @@ impl Field {
     /// Build a field from a directly supplied pixel scale (arcsec/px, per axis)
     /// and sensor pixel counts.
     ///
+    /// # Example
+    ///
+    /// ```
+    /// use target_match::Field;
+    ///
+    /// let field = Field::from_pixel_scale((0.9694, 0.9694), (6248, 4176)).unwrap();
+    /// assert_eq!(field.pixel_scale(), Some((0.9694, 0.9694)));
+    /// assert!((field.width().degrees() - 1.683).abs() < 1e-2);
+    /// ```
+    ///
     /// # Errors
     /// [`Error::InvalidOptics`] if any input is non-positive or non-finite.
     pub fn from_pixel_scale(scale_arcsec_px: (f64, f64), pixels: (u32, u32)) -> Result<Self> {
@@ -167,6 +193,17 @@ impl Field {
 
     /// Build a field directly from its angular width and height (no optics; pixel
     /// scale is unknown).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::Angle;
+    /// use target_match::Field;
+    ///
+    /// let field = Field::from_fov(Angle::from_degrees(2.0), Angle::from_degrees(1.0)).unwrap();
+    /// assert_eq!(field.width().degrees(), 2.0);
+    /// assert!(field.pixel_scale().is_none(), "no optics, so no plate scale");
+    /// ```
     ///
     /// # Errors
     /// [`Error::InvalidOptics`] if width or height is non-positive or non-finite.

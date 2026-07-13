@@ -26,12 +26,59 @@ use crate::optics::{Field, RadiusPolicy};
 ///
 /// The trait exposes **only** a J2000 position — matching never reads a name or
 /// designation. A caller's own type keeps its identity; a [`Match`] borrows it.
+///
+/// # Example
+///
+/// ```
+/// use skymath::{Angle, Equatorial};
+/// use target_match::SkyObject;
+///
+/// struct Target {
+///     name: &'static str,
+///     ra: f64,
+///     dec: f64,
+/// }
+/// impl SkyObject for Target {
+///     fn position(&self) -> Equatorial {
+///         Equatorial::j2000(Angle::from_degrees(self.ra), Angle::from_degrees(self.dec)).unwrap()
+///     }
+/// }
+///
+/// let m31 = Target { name: "M 31", ra: 10.6847, dec: 41.2688 };
+/// assert!((m31.position().ra().degrees() - 10.6847).abs() < 1e-9);
+/// ```
 pub trait SkyObject {
     /// The object's J2000 equatorial position.
     fn position(&self) -> Equatorial;
 }
 
 /// The shape that decides whether an object is "in frame".
+///
+/// Usually built for you by a [`Constraint`] constructor; pass one directly to
+/// [`is_framed`] to test a single object.
+///
+/// # Example
+///
+/// ```
+/// use skymath::{Angle, Equatorial, ParseMode};
+/// use target_match::{is_framed, Membership, SkyObject};
+///
+/// struct Target {
+///     ra: f64,
+///     dec: f64,
+/// }
+/// impl SkyObject for Target {
+///     fn position(&self) -> Equatorial {
+///         Equatorial::j2000(Angle::from_degrees(self.ra), Angle::from_degrees(self.dec)).unwrap()
+///     }
+/// }
+///
+/// let m31 = Target { ra: 10.6847, dec: 41.2688 };
+/// let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
+///
+/// let shape = Membership::Circular { radius: Angle::from_degrees(1.0) };
+/// assert!(is_framed(pointing, &m31, shape).in_frame);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Membership {
