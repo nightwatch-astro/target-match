@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/nightwatch-astro/target-match/compare/v0.3.2...v0.3.3) (2026-07-13)
+
+
+### Documentation
+
+* add status badges ([#12](https://github.com/nightwatch-astro/target-match/issues/12)) ([85d7d1e](https://github.com/nightwatch-astro/target-match/commit/85d7d1ec565b4ccdf62ddd06108f712c74e04a92))
+
 ## [0.3.2](https://github.com/nightwatch-astro/target-match/compare/v0.3.1...v0.3.2) (2026-07-13)
 
 
