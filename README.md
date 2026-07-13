@@ -1,5 +1,9 @@
 # target-match
 
+[![CI](https://github.com/nightwatch-astro/target-match/actions/workflows/ci.yml/badge.svg)](https://github.com/nightwatch-astro/target-match/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/target-match.svg)](https://crates.io/crates/target-match)
+[![docs.rs](https://img.shields.io/docsrs/target-match)](https://docs.rs/target-match)
+
 Rust library that identifies which catalogued sky objects a telescope frame
 covers, given a pointing (right ascension / declination) and a field of view.
 
