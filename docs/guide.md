@@ -74,6 +74,14 @@ or the field of view directly:
 and
 [`Field::from_fov`](https://docs.rs/target-match/latest/target_match/struct.Field.html#method.from_fov).
 
+All three constructors are fallible: non-positive or non-finite inputs (a zero
+focal length, a negative pixel size) return
+[`Error::InvalidOptics`](https://docs.rs/target-match/latest/target_match/enum.Error.html),
+aliased through
+[`Result`](https://docs.rs/target-match/latest/target_match/type.Result.html).
+The snippets here `.unwrap()` because the values are known-good; handle the
+`Result` in production. Matching itself is infallible once a `Field` exists.
+
 ## 3. Rank the catalogue against a pointing
 
 Parse the pointing (decimal degrees or sexagesimal), build a
@@ -109,9 +117,19 @@ assert_eq!(hits[0].object.name, "M 31");
 The pointing is precessed to J2000 before matching, so it can be given at any
 epoch. `Constraint::within` derives a circular search radius from the field
 under a
-[`RadiusPolicy`](https://docs.rs/target-match/latest/target_match/enum.RadiusPolicy.html)
-— `Circumscribed` (the default shown here) is the circle that bounds the whole
-frame.
+[`RadiusPolicy`](https://docs.rs/target-match/latest/target_match/enum.RadiusPolicy.html):
+
+- `Circumscribed` (used in this example) — half the diagonal, the circle that
+  bounds the whole frame. Never misses an in-frame object, but can report corner
+  objects that fall outside the sensor rectangle.
+- `Inscribed` — half the shorter side. The opposite trade: no false positives,
+  but misses objects near the corners.
+- `Multiplier(m)` — the circumscribed radius scaled by `m`.
+- `Explicit(angle)` — a fixed radius, ignoring the field extent.
+
+For an exact answer with no circular approximation, use
+[`Constraint::frame`](https://docs.rs/target-match/latest/target_match/struct.Constraint.html#method.frame)
+instead of `within` (see §5).
 
 Results are a `Vec<`[`Match`](https://docs.rs/target-match/latest/target_match/struct.Match.html)`>`,
 ascending by separation. Each `Match` carries the borrowed object, its great-circle
@@ -176,6 +194,35 @@ let field = Field::from_optics(Optics {
 let hits = rank(pointing, &catalog, Constraint::frame(&field));
 assert!(hits[0].offset.frame.is_some());
 assert!(hits[0].offset.pixels.is_some());
+```
+
+The camera position angle is measured in degrees East of North. To see the
+convention, place an object due north of the pointing and read `Offset::frame`
+`(x, y)` under two rotations. Axis-aligned, it sits on the `+y` (North) axis;
+rotated 90° East of North, the same object moves onto the `-x` axis:
+
+```rust
+use skymath::{Angle, Equatorial, ParseMode};
+use target_match::{rank, Constraint, Field, SkyObject};
+
+struct Target { ra_deg: f64, dec_deg: f64 }
+impl SkyObject for Target {
+    fn position(&self) -> Equatorial {
+        Equatorial::j2000(Angle::from_degrees(self.ra_deg), Angle::from_degrees(self.dec_deg)).unwrap()
+    }
+}
+
+let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
+let field = Field::from_fov(Angle::from_degrees(2.0), Angle::from_degrees(2.0)).unwrap();
+// ~0.3° due north of the pointing.
+let catalog = [Target { ra_deg: 10.6847, dec_deg: 41.2688 + 0.3 }];
+
+let (ax, ay) = rank(pointing, &catalog, Constraint::frame(&field))[0].offset.frame.unwrap();
+assert!(ay.degrees() > 0.25 && ax.degrees().abs() < 0.05, "on the +y axis");
+
+let rotated = Constraint::frame_rotated(&field, Angle::from_degrees(90.0));
+let (rx, ry) = rank(pointing, &catalog, rotated)[0].offset.frame.unwrap();
+assert!(rx.degrees() < -0.25 && ry.degrees().abs() < 0.05, "rotated onto the -x axis");
 ```
 
 ## 6. Nearest-one and nearest-N

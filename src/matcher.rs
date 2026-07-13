@@ -270,23 +270,39 @@ impl Constraint {
             pixel_scale: field.pixel_scale(),
         }
     }
-    /// Rotated rectangular membership from a field and a camera position angle.
+    /// Rotated rectangular membership from a field and a camera position angle
+    /// (degrees East of North).
     ///
     /// # Example
     ///
-    /// ```
-    /// use skymath::Angle;
-    /// use target_match::{Constraint, Field, Membership, Optics};
+    /// An object due north of the pointing sits on the frame's `+y` axis when
+    /// axis-aligned; a 90° East-of-North camera rotation moves it onto the `-x`
+    /// axis.
     ///
-    /// let field = Field::from_optics(Optics {
-    ///     focal_mm: 800.0,
-    ///     pixel_um: (3.76, 3.76),
-    ///     binning: (1, 1),
-    ///     pixels: (6248, 4176),
-    /// })
-    /// .unwrap();
-    /// let c = Constraint::frame_rotated(&field, Angle::from_degrees(15.0));
-    /// assert!(matches!(c.membership, Membership::Rotated { .. }));
+    /// ```
+    /// use skymath::{Angle, Equatorial, ParseMode};
+    /// use target_match::{rank, Constraint, Field, SkyObject};
+    ///
+    /// struct Target {
+    ///     ra: f64,
+    ///     dec: f64,
+    /// }
+    /// impl SkyObject for Target {
+    ///     fn position(&self) -> Equatorial {
+    ///         Equatorial::j2000(Angle::from_degrees(self.ra), Angle::from_degrees(self.dec)).unwrap()
+    ///     }
+    /// }
+    ///
+    /// let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
+    /// let field = Field::from_fov(Angle::from_degrees(2.0), Angle::from_degrees(2.0)).unwrap();
+    /// let catalog = [Target { ra: 10.6847, dec: 41.2688 + 0.3 }]; // ~0.3° due north
+    ///
+    /// let (ax, ay) = rank(pointing, &catalog, Constraint::frame(&field))[0].offset.frame.unwrap();
+    /// assert!(ay.degrees() > 0.25 && ax.degrees().abs() < 0.05);
+    ///
+    /// let rotated = Constraint::frame_rotated(&field, Angle::from_degrees(90.0));
+    /// let (rx, ry) = rank(pointing, &catalog, rotated)[0].offset.frame.unwrap();
+    /// assert!(rx.degrees() < -0.25 && ry.degrees().abs() < 0.05);
     /// ```
     #[must_use]
     pub fn frame_rotated(field: &Field, position_angle: Angle) -> Self {

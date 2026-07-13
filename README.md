@@ -9,7 +9,8 @@ catalogue data and performs no I/O: callers supply objects by implementing the
 one-method [`SkyObject`](https://docs.rs/target-match/latest/target_match/trait.SkyObject.html)
 trait, and the library computes the geometry — angular separation, in-frame
 [`Membership`](https://docs.rs/target-match/latest/target_match/enum.Membership.html)
-(circular or rectangular, with optional camera rotation), tangent-plane
+(a fast circular radius that approximates the frame, or the exact rectangle,
+with optional camera rotation), tangent-plane
 [`Offset`](https://docs.rs/target-match/latest/target_match/struct.Offset.html)s,
 and deterministic ranking.
 
@@ -18,7 +19,11 @@ The field of view can be computed from
 (focal length, pixel size, binning, sensor dimensions), from a pixel scale, or
 supplied directly via
 [`Field`](https://docs.rs/target-match/latest/target_match/struct.Field.html).
-Pointings at any epoch are precessed to J2000 before matching.
+Each `Field` constructor is fallible: non-positive or non-finite inputs return
+[`Error::InvalidOptics`](https://docs.rs/target-match/latest/target_match/enum.Error.html)
+(the snippets below `.unwrap()` on known-good values). Matching itself is
+infallible once inputs are valid. Pointings at any epoch are precessed to J2000
+before matching.
 
 Coordinate and angle types come from the
 [`skymath`](https://github.com/nightwatch-astro/skymath) crate and appear
@@ -62,7 +67,9 @@ let field = Field::from_optics(Optics {
     focal_mm: 800.0, pixel_um: (3.76, 3.76), binning: (1, 1), pixels: (6248, 4176),
 }).unwrap();
 
-// Which catalogued object the frame captured, nearest first.
+// Nearest catalogued object within the frame's search radius. `within` uses a
+// circular approximation (here the circumscribed circle, half the diagonal); for
+// the exact sensor rectangle use `Constraint::frame(&field)`.
 let hits = rank(pointing, &catalog, Constraint::within(&field, RadiusPolicy::Circumscribed).nearest_one());
 assert_eq!(hits[0].object.name, "M 31");
 ```

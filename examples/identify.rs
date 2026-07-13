@@ -63,7 +63,9 @@ fn main() -> Result<()> {
         field.pixel_scale().map(|(x, _)| x).unwrap_or(f64::NAN),
     );
 
-    // Every catalogued object that falls on the frame, nearest first.
+    // Every catalogued object within the frame's search radius, nearest first.
+    // `within` uses a circular approximation (the circumscribed circle); swap in
+    // `Constraint::frame(&field)` to test the exact sensor rectangle instead.
     let hits = rank(
         pointing,
         &catalog,
