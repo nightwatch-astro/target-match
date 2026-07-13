@@ -216,28 +216,92 @@ impl Field {
         })
     }
 
-    /// Field width (x extent).
+    /// Field width (x extent). See also [`height`](Field::height) and
+    /// [`diagonal`](Field::diagonal).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::Angle;
+    /// use target_match::Field;
+    ///
+    /// let field = Field::from_fov(Angle::from_degrees(2.0), Angle::from_degrees(1.0)).unwrap();
+    /// assert_eq!(field.width().degrees(), 2.0);
+    /// ```
     #[must_use]
     pub fn width(self) -> Angle {
         self.fov.0
     }
-    /// Field height (y extent).
+    /// Field height (y extent). See also [`width`](Field::width) and
+    /// [`diagonal`](Field::diagonal).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::Angle;
+    /// use target_match::Field;
+    ///
+    /// let field = Field::from_fov(Angle::from_degrees(2.0), Angle::from_degrees(1.0)).unwrap();
+    /// assert_eq!(field.height().degrees(), 1.0);
+    /// ```
     #[must_use]
     pub fn height(self) -> Angle {
         self.fov.1
     }
-    /// Diagonal field of view.
+    /// Diagonal field of view — `hypot(`[`width`](Field::width)`,`
+    /// [`height`](Field::height)`)`. Halved, this is the
+    /// [`RadiusPolicy::Circumscribed`] search radius.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::Angle;
+    /// use target_match::Field;
+    ///
+    /// let field = Field::from_fov(Angle::from_degrees(2.0), Angle::from_degrees(1.0)).unwrap();
+    /// assert!((field.diagonal().degrees() - 2.0_f64.hypot(1.0)).abs() < 1e-9);
+    /// ```
     #[must_use]
     pub fn diagonal(self) -> Angle {
         Angle::from_degrees(self.fov.0.degrees().hypot(self.fov.1.degrees()))
     }
-    /// Per-axis pixel scale (arcsec/px), if this field was built with a scale.
+    /// Per-axis pixel scale (arcsec/px), if this field was built with a scale
+    /// (via [`from_optics`](Field::from_optics) or
+    /// [`from_pixel_scale`](Field::from_pixel_scale)) — `None` for
+    /// [`from_fov`](Field::from_fov).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use target_match::{Field, Optics};
+    ///
+    /// let field = Field::from_optics(Optics {
+    ///     focal_mm: 800.0, pixel_um: (3.76, 3.76), binning: (1, 1), pixels: (6248, 4176),
+    /// })
+    /// .unwrap();
+    /// let (sx, sy) = field.pixel_scale().unwrap();
+    /// assert!((sx - 0.969).abs() < 1e-2);
+    /// assert_eq!(sx, sy);
+    /// ```
     #[must_use]
     pub fn pixel_scale(self) -> Option<(f64, f64)> {
         self.pixel_scale
     }
 
-    /// Compute a search radius from this field under `policy`.
+    /// Compute a search radius from this field under `policy`. Feeds
+    /// [`Constraint::within`](crate::Constraint::within), which calls this
+    /// internally.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::Angle;
+    /// use target_match::{Field, RadiusPolicy};
+    ///
+    /// let field = Field::from_fov(Angle::from_degrees(2.0), Angle::from_degrees(1.0)).unwrap();
+    /// let r = field.radius(RadiusPolicy::Explicit(Angle::from_degrees(3.0)));
+    /// assert!((r.degrees() - 3.0).abs() < 1e-9);
+    /// ```
     #[must_use]
     pub fn radius(self, policy: RadiusPolicy) -> Angle {
         match policy {

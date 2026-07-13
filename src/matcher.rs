@@ -48,7 +48,25 @@ use crate::optics::{Field, RadiusPolicy};
 /// assert!((m31.position().ra().degrees() - 10.6847).abs() < 1e-9);
 /// ```
 pub trait SkyObject {
-    /// The object's J2000 equatorial position.
+    /// The object's J2000 equatorial position — the only thing [`rank`],
+    /// [`is_framed`], and [`Matcher`] read from an implementer.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::{Angle, Equatorial};
+    /// use target_match::SkyObject;
+    ///
+    /// struct Target { ra_deg: f64, dec_deg: f64 }
+    /// impl SkyObject for Target {
+    ///     fn position(&self) -> Equatorial {
+    ///         Equatorial::j2000(Angle::from_degrees(self.ra_deg), Angle::from_degrees(self.dec_deg)).unwrap()
+    ///     }
+    /// }
+    ///
+    /// let m31 = Target { ra_deg: 10.6847, dec_deg: 41.2688 };
+    /// assert!((m31.position().ra().degrees() - 10.6847).abs() < 1e-9);
+    /// ```
     fn position(&self) -> Equatorial;
 }
 
@@ -759,6 +777,26 @@ pub struct Matcher<T> {
 impl<T: SkyObject> Matcher<T> {
     /// Build an index from a set of objects (original order is preserved for
     /// tie-breaking and [`objects`](Matcher::objects)).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::{Angle, Equatorial};
+    /// use target_match::{Matcher, SkyObject};
+    ///
+    /// struct Target { ra_deg: f64, dec_deg: f64 }
+    /// impl SkyObject for Target {
+    ///     fn position(&self) -> Equatorial {
+    ///         Equatorial::j2000(Angle::from_degrees(self.ra_deg), Angle::from_degrees(self.dec_deg)).unwrap()
+    ///     }
+    /// }
+    ///
+    /// let matcher = Matcher::from_objects(vec![
+    ///     Target { ra_deg: 10.6847, dec_deg: 41.2688 },
+    ///     Target { ra_deg: 23.4621, dec_deg: 30.6599 },
+    /// ]);
+    /// assert_eq!(matcher.objects().len(), 2);
+    /// ```
     #[must_use]
     pub fn from_objects(objects: Vec<T>) -> Self {
         let mut sorted: Vec<(f64, usize)> = objects
@@ -778,12 +816,54 @@ impl<T: SkyObject> Matcher<T> {
     }
 
     /// The stored objects, in their original insertion order.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::{Angle, Equatorial};
+    /// use target_match::{Matcher, SkyObject};
+    ///
+    /// struct Target { name: &'static str, ra_deg: f64, dec_deg: f64 }
+    /// impl SkyObject for Target {
+    ///     fn position(&self) -> Equatorial {
+    ///         Equatorial::j2000(Angle::from_degrees(self.ra_deg), Angle::from_degrees(self.dec_deg)).unwrap()
+    ///     }
+    /// }
+    ///
+    /// let matcher = Matcher::from_objects(vec![Target { name: "M 31", ra_deg: 10.6847, dec_deg: 41.2688 }]);
+    /// assert_eq!(matcher.objects()[0].name, "M 31");
+    /// ```
     #[must_use]
     pub fn objects(&self) -> &[T] {
         &self.storage
     }
 
-    /// Query the index for a pointing under a constraint.
+    /// Query the index for a pointing under a constraint. Results are
+    /// identical to calling [`rank`] with [`objects`](Matcher::objects).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::{Angle, Equatorial, ParseMode};
+    /// use target_match::{Constraint, Field, Matcher, Optics, RadiusPolicy, SkyObject};
+    ///
+    /// struct Target { name: &'static str, ra_deg: f64, dec_deg: f64 }
+    /// impl SkyObject for Target {
+    ///     fn position(&self) -> Equatorial {
+    ///         Equatorial::j2000(Angle::from_degrees(self.ra_deg), Angle::from_degrees(self.dec_deg)).unwrap()
+    ///     }
+    /// }
+    ///
+    /// let matcher = Matcher::from_objects(vec![Target { name: "M 31", ra_deg: 10.6847, dec_deg: 41.2688 }]);
+    /// let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
+    /// let field = Field::from_optics(Optics {
+    ///     focal_mm: 800.0, pixel_um: (3.76, 3.76), binning: (1, 1), pixels: (6248, 4176),
+    /// })
+    /// .unwrap();
+    ///
+    /// let hits = matcher.query(pointing, Constraint::within(&field, RadiusPolicy::Circumscribed).nearest_one());
+    /// assert_eq!(hits[0].object.name, "M 31");
+    /// ```
     #[must_use]
     pub fn query(&self, pointing: Equatorial, c: Constraint) -> Vec<Match<'_, T>> {
         let p = precess(pointing, Epoch::J2000);
@@ -796,6 +876,27 @@ impl<T: SkyObject> Matcher<T> {
     }
 
     /// Evaluate a single stored-or-external object against a frame (see [`is_framed`]).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use skymath::{Angle, Equatorial, ParseMode};
+    /// use target_match::{Matcher, Membership, SkyObject};
+    ///
+    /// struct Target { ra_deg: f64, dec_deg: f64 }
+    /// impl SkyObject for Target {
+    ///     fn position(&self) -> Equatorial {
+    ///         Equatorial::j2000(Angle::from_degrees(self.ra_deg), Angle::from_degrees(self.dec_deg)).unwrap()
+    ///     }
+    /// }
+    ///
+    /// let matcher = Matcher::from_objects(vec![Target { ra_deg: 10.6847, dec_deg: 41.2688 }]);
+    /// let pointing = Equatorial::parse_j2000("00:42:44.3", "+41:16:09", ParseMode::Strict).unwrap();
+    ///
+    /// let obj = &matcher.objects()[0];
+    /// let m = matcher.is_framed(pointing, obj, Membership::Circular { radius: Angle::from_degrees(1.0) });
+    /// assert!(m.in_frame);
+    /// ```
     #[must_use]
     pub fn is_framed<'a>(
         &self,
