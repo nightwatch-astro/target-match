@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/nightwatch-astro/target-match/compare/v0.3.0...v0.3.1) (2026-07-13)
+
+
+### Bug Fixes
+
+* crate-root docs.rs links now resolve ([#8](https://github.com/nightwatch-astro/target-match/issues/8)) ([e1bcf69](https://github.com/nightwatch-astro/target-match/commit/e1bcf6935a76833c81838be7b049585a3f51727f))
+
 ## [0.3.0](https://github.com/nightwatch-astro/target-match/compare/v0.2.0...v0.3.0) (2026-07-12)
 
 
