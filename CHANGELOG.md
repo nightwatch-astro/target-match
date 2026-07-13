@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/nightwatch-astro/target-match/compare/v0.3.1...v0.3.2) (2026-07-13)
+
+
+### Documentation
+
+* render README and guide on docs.rs, add per-method examples ([#10](https://github.com/nightwatch-astro/target-match/issues/10)) ([f71eadc](https://github.com/nightwatch-astro/target-match/commit/f71eadcb6bf3793ee0edb4ab81183294416bd0f9))
+
 ## [0.3.1](https://github.com/nightwatch-astro/target-match/compare/v0.3.0...v0.3.1) (2026-07-13)
 
 
