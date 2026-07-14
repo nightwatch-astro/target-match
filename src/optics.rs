@@ -1,3 +1,7 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 //! Plate scale and field-of-view geometry.
 //!
 //! A [`Field`] is the angular extent of a frame, built from full [`Optics`], from
