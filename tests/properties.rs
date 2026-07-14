@@ -1,3 +1,7 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 //! Property-based tests of the matcher invariants (SC-007, SC-008).
 //!
 //! The coordinate-math properties this suite once carried (separation
