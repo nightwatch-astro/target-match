@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/nightwatch-astro/target-match/compare/v0.4.0...v0.4.1) (2026-07-17)
+
+
+### Bug Fixes
+
+* **deps:** pick up skymath 0.4 parse_date_obs trailing-Z fix ([#20](https://github.com/nightwatch-astro/target-match/issues/20)) ([a7f5355](https://github.com/nightwatch-astro/target-match/commit/a7f5355cff55c0f60b4a604e5d557d22214d3653))
+
 ## [0.4.0](https://github.com/nightwatch-astro/target-match/compare/v0.3.3...v0.4.0) (2026-07-17)
 
 
