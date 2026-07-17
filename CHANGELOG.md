@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.4.0](https://github.com/nightwatch-astro/target-match/compare/v0.3.3...v0.4.0) (2026-07-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* relicense from Apache-2.0 to MPL-2.0 ([#14](https://github.com/nightwatch-astro/target-match/issues/14))
+
+### Bug Fixes
+
+* store CLA signatures on unprotected branch, allowlist owner ([#17](https://github.com/nightwatch-astro/target-match/issues/17)) ([00f79dc](https://github.com/nightwatch-astro/target-match/commit/00f79dc1e9343acc7be5d11ee68dd1ec9967394e))
+* use GitHub App token for CLA bot instead of PAT ([#16](https://github.com/nightwatch-astro/target-match/issues/16)) ([c90de4e](https://github.com/nightwatch-astro/target-match/commit/c90de4e02f1f7a1eef45bec22dbeb0e88ce75539))
+
+
+### Miscellaneous Chores
+
+* relicense from Apache-2.0 to MPL-2.0 ([#14](https://github.com/nightwatch-astro/target-match/issues/14)) ([3ac3064](https://github.com/nightwatch-astro/target-match/commit/3ac3064d863ade76f27d2da8dc10e041fbea2724))
+
 ## [0.3.3](https://github.com/nightwatch-astro/target-match/compare/v0.3.2...v0.3.3) (2026-07-13)
 
 
