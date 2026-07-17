@@ -27,7 +27,7 @@ serde = ["dep:serde", "skymath/serde"]
 # geometry, precession. target-match's public API uses these types directly
 # (re-exported as `target_match::skymath`), so this version must match the one
 # consumers use for skymath's own planning surface.
-skymath = "0.3"
+skymath = "0.4"
 # Typed public error enum. Pure-Rust, proc-macro only — no runtime weight.
 thiserror = "2"
 # Optional, off by default: derives Serialize/Deserialize on public data types.
