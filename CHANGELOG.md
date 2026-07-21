@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/nightwatch-astro/target-match/compare/v0.4.1...v0.4.2) (2026-07-21)
+
+
+### Bug Fixes
+
+* **deps:** bump skymath to 0.5 ([#22](https://github.com/nightwatch-astro/target-match/issues/22)) ([faf7247](https://github.com/nightwatch-astro/target-match/commit/faf7247e8d83ddfe2d5f44a5153f0b5f598d482e))
+
 ## [0.4.1](https://github.com/nightwatch-astro/target-match/compare/v0.4.0...v0.4.1) (2026-07-17)
 
 
