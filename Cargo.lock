@@ -324,9 +324,9 @@ dependencies = [
 
 [[package]]
 name = "skymath"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a10b1f9678d1f8e2aaa7f9f3af28e0c5d0bbb9c544ae563e08b5dc1d9fbc2bfb"
+checksum = "5fe24e1f966830a353f4a741d815655463e41a064b01c161a6b0a4cca62b84b1"
 dependencies = [
  "serde",
  "thiserror",
