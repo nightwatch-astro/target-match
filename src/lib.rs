@@ -11,10 +11,13 @@
 //!   supplied pixel scale / field of view — plus the search-radius policies.
 //! - [`matcher`] — the `SkyObject` input trait, match constraints (radius,
 //!   rectangular field of view, nearest-N), and deterministic ranking.
+//! - [`footprint`] — solved sky-boundary comparison, residual-rotation
+//!   coverage intervals, and hole-aware captured unions.
 //! - [`guide`] — a task-oriented walkthrough, from implementing `SkyObject`
 //!   through repeated queries with `Matcher`.
 
 pub mod error;
+pub mod footprint;
 pub mod matcher;
 pub mod optics;
 
@@ -35,6 +38,14 @@ pub use skymath;
 // submodule path (`target_match/matcher/…`) and crate-root links 404.
 #[doc(inline)]
 pub use error::{Error, Result};
+#[doc(inline)]
+pub use footprint::{
+    compare_footprints, coverage_at_residual_rotation, coverage_rotation_intervals,
+    ComponentCoverageEvidence, Containment, CoverageBand, CoverageState, FootprintComparison,
+    FootprintProvenance, FootprintUnion, ImageParity, ObjectCoverageEvidence, ObjectShape,
+    PanelContainmentEvidence, PanelCoverageEvidence, PointContainmentEvidence, RotationInterval,
+    RotationSearch, SkyEllipse, SkyFootprint,
+};
 #[doc(inline)]
 pub use matcher::{
     is_framed, rank, Constraint, Match, Matcher, Membership, Offset, Query, SkyObject,
