@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/nightwatch-astro/target-match/compare/v0.4.2...v0.5.0) (2026-07-22)
+
+
+### Features
+
+* add sky footprint geometry ([#24](https://github.com/nightwatch-astro/target-match/issues/24)) ([5b51327](https://github.com/nightwatch-astro/target-match/commit/5b51327d6f749a5841030510d248d0cda31c89a7))
+
 ## [0.4.2](https://github.com/nightwatch-astro/target-match/compare/v0.4.1...v0.4.2) (2026-07-21)
 
 
