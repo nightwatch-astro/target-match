@@ -35,6 +35,14 @@ directly in this crate's API (`skymath::Equatorial`, `skymath::Angle` — with
 decimal and strict/lenient sexagesimal parsing); `skymath` is re-exported as
 `target_match::skymath` so a version-matched copy is always available.
 
+Captured-image geometry uses `SkyFootprint` values built from a solved centre,
+ordered sky boundary, solved sky position angle, image parity, and evidence
+identity. Pair comparison reports intersection over the smaller footprint,
+centre separation relative to the smaller diagonal, transported sky-axis
+rotation, and parity. `FootprintUnion` preserves disconnected captured regions
+and interior gaps for point, footprint, and sampled-ellipse coverage queries.
+The crate reports measurements and does not apply session or mosaic policy.
+
 API documentation, generated from the source on every release:
 [docs.rs/target-match](https://docs.rs/target-match). For a task-oriented
 walkthrough, see the
@@ -44,7 +52,7 @@ walkthrough, see the
 
 ```toml
 [dependencies]
-target-match = "0.3"
+target-match = "0.4"
 ```
 
 ```rust

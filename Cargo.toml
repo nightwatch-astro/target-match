@@ -27,11 +27,17 @@ serde = ["dep:serde", "skymath/serde"]
 # geometry, precession. target-match's public API uses these types directly
 # (re-exported as `target_match::skymath`), so this version must match the one
 # consumers use for skymath's own planning surface.
-skymath = "0.5"
+skymath = "=0.6.0"
+# Hole-aware polygon intersection and union. Its geometry types remain private.
+geo = { version = "=0.28.0", default-features = false }
+# Constrains geo's transitive type crate to the last release supporting Rust 1.74.
+geo-types = { version = "=0.7.13", default-features = false }
 # Typed public error enum. Pure-Rust, proc-macro only — no runtime weight.
 thiserror = "2"
 # Optional, off by default: derives Serialize/Deserialize on public data types.
 serde = { version = "1", features = ["derive"], optional = true }
+# Constrains skymath's transitive time crate to a Rust 1.74-compatible release.
+time = { version = "=0.3.41", default-features = false }
 
 [dev-dependencies]
 # Property-based testing of the matcher invariants (matcher==rank equivalence).

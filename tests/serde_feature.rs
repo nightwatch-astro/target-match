@@ -6,8 +6,10 @@
 //! Only compiled/run with `--features serde`.
 #![cfg(feature = "serde")]
 
-use skymath::{Angle, Epoch, Equatorial};
-use target_match::{Membership, Optics, RadiusPolicy};
+use skymath::{gnomonic_unproject, Angle, Epoch, Equatorial, GnomonicPoint};
+use target_match::{
+    FootprintProvenance, ImageParity, Membership, Optics, RadiusPolicy, SkyFootprint,
+};
 
 #[test]
 fn public_types_round_trip_through_json() {
@@ -42,4 +44,26 @@ fn public_types_round_trip_through_json() {
     };
     let back_m: Membership = serde_json::from_str(&serde_json::to_string(&m).unwrap()).unwrap();
     assert_eq!(m, back_m);
+
+    let centre = Equatorial::j2000(Angle::from_degrees(10.0), Angle::from_degrees(20.0)).unwrap();
+    let corners = [
+        (-0.01, -0.005),
+        (0.01, -0.005),
+        (0.01, 0.005),
+        (-0.01, 0.005),
+    ]
+    .into_iter()
+    .map(|(east, north)| gnomonic_unproject(centre, GnomonicPoint { east, north }).unwrap())
+    .collect();
+    let footprint = SkyFootprint::new(
+        centre,
+        corners,
+        Angle::from_degrees(15.0),
+        ImageParity::Direct,
+        FootprintProvenance::new("serde-footprint").unwrap(),
+    )
+    .unwrap();
+    let back_footprint: SkyFootprint =
+        serde_json::from_str(&serde_json::to_string(&footprint).unwrap()).unwrap();
+    assert_eq!(footprint, back_footprint);
 }

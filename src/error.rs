@@ -4,11 +4,10 @@
 
 //! Error type for `target-match`.
 //!
-//! Every fallible entry point returns [`Result`]. The only construction this
-//! crate itself validates is optics/field geometry — coordinate parsing and
-//! domain checks happen in [`skymath`] when the consumer builds an
-//! [`skymath::Equatorial`], and surface as [`skymath::Error`]. Matching and
-//! precession are infallible once inputs are valid values.
+//! Every fallible entry point returns [`Result`]. Coordinate parsing and domain
+//! checks happen in [`skymath`] when the consumer builds an
+//! [`skymath::Equatorial`]. This crate validates optics, captured boundaries,
+//! common-plane projections, and caller-supplied geometry search parameters.
 
 use thiserror::Error;
 
@@ -32,6 +31,42 @@ pub enum Error {
     /// derive a field of view.
     #[error("invalid optics: {0}")]
     InvalidOptics(String),
+    /// An ordered captured boundary is degenerate, self-intersecting, or does
+    /// not contain its declared centre.
+    #[error("invalid footprint {provenance:?}: {reason}")]
+    InvalidFootprint {
+        /// Caller-supplied evidence identity.
+        provenance: String,
+        /// Validation failure.
+        reason: String,
+    },
+    /// Compared geometry uses different coordinate epochs.
+    #[error("footprint coordinates must use one epoch")]
+    FootprintEpochMismatch,
+    /// A common tangent anchor cannot be selected for antipodal geometry.
+    #[error("antipodal geometry has no unique common tangent plane")]
+    AntipodalGeometry,
+    /// A point is at or beyond the selected gnomonic projection horizon.
+    #[error("gnomonic projection failed for {0}")]
+    ProjectionFailed(String),
+    /// A footprint union requires at least one input.
+    #[error("footprint union requires at least one footprint")]
+    EmptyFootprintSet,
+    /// Per-panel evidence requires unique provenance identities.
+    #[error("duplicate footprint provenance: {0}")]
+    DuplicateFootprintProvenance(String),
+    /// A normalized coverage band is non-finite, reversed, or outside `[0, 1]`.
+    #[error("invalid coverage band: {0}")]
+    InvalidCoverageBand(String),
+    /// A residual-rotation search domain or resolution is invalid.
+    #[error("invalid rotation search: {0}")]
+    InvalidRotationSearch(String),
+    /// An ellipse has invalid axes, orientation, or sampling resolution.
+    #[error("invalid ellipse: {0}")]
+    InvalidEllipse(String),
+    /// Caller-supplied object geometry cannot produce a positive planar area.
+    #[error("invalid object geometry: {0}")]
+    InvalidObjectGeometry(String),
 }
 
 /// Convenience alias for `Result<T, `[`Error`](enum@Error)`>`.
@@ -46,6 +81,10 @@ mod tests {
         assert_eq!(
             Error::InvalidOptics("focal <= 0".into()).to_string(),
             "invalid optics: focal <= 0"
+        );
+        assert_eq!(
+            Error::AntipodalGeometry.to_string(),
+            "antipodal geometry has no unique common tangent plane"
         );
     }
 }
