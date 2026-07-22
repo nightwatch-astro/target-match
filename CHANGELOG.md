@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/nightwatch-astro/target-match/compare/v0.5.0...v0.5.1) (2026-07-22)
+
+
+### Bug Fixes
+
+* allow consumers to select compatible time versions ([#26](https://github.com/nightwatch-astro/target-match/issues/26)) ([2fc2e5b](https://github.com/nightwatch-astro/target-match/commit/2fc2e5b23a77dc8eb8f026541e53b2db80115f91))
+
 ## [0.5.0](https://github.com/nightwatch-astro/target-match/compare/v0.4.2...v0.5.0) (2026-07-22)
 
 
