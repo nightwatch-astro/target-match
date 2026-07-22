@@ -36,8 +36,6 @@ geo-types = { version = "=0.7.13", default-features = false }
 thiserror = "2"
 # Optional, off by default: derives Serialize/Deserialize on public data types.
 serde = { version = "1", features = ["derive"], optional = true }
-# Constrains skymath's transitive time crate to a Rust 1.74-compatible release.
-time = { version = "=0.3.41", default-features = false }
 
 [dev-dependencies]
 # Property-based testing of the matcher invariants (matcher==rank equivalence).
