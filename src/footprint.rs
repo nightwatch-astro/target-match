@@ -54,6 +54,7 @@ pub enum ImageParity {
 /// `target-match` compares and returns it but does not interpret it.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(try_from = "String"))]
 pub struct FootprintProvenance(String);
 
 impl FootprintProvenance {
@@ -81,6 +82,15 @@ impl FootprintProvenance {
     }
 }
 
+#[cfg(feature = "serde")]
+impl TryFrom<String> for FootprintProvenance {
+    type Error = Error;
+
+    fn try_from(value: String) -> Result<Self> {
+        Self::new(value)
+    }
+}
+
 /// An ordered solved image boundary on the sky.
 ///
 /// Corners may describe any simple polygon. The boundary must stay within the
@@ -88,12 +98,38 @@ impl FootprintProvenance {
 /// epoch as `centre`.
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(try_from = "UncheckedSkyFootprint"))]
 pub struct SkyFootprint {
     centre: Equatorial,
     corners: Vec<Equatorial>,
     sky_position_angle: Angle,
     parity: ImageParity,
     provenance: FootprintProvenance,
+}
+
+#[cfg(feature = "serde")]
+#[derive(serde::Deserialize)]
+struct UncheckedSkyFootprint {
+    centre: Equatorial,
+    corners: Vec<Equatorial>,
+    sky_position_angle: Angle,
+    parity: ImageParity,
+    provenance: FootprintProvenance,
+}
+
+#[cfg(feature = "serde")]
+impl TryFrom<UncheckedSkyFootprint> for SkyFootprint {
+    type Error = Error;
+
+    fn try_from(value: UncheckedSkyFootprint) -> Result<Self> {
+        Self::new(
+            value.centre,
+            value.corners,
+            value.sky_position_angle,
+            value.parity,
+            value.provenance,
+        )
+    }
 }
 
 impl SkyFootprint {
@@ -235,9 +271,26 @@ pub fn compare_footprints(
 /// Inclusive normalized-coverage band supplied by the caller.
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(try_from = "UncheckedCoverageBand"))]
 pub struct CoverageBand {
     minimum: f64,
     maximum: f64,
+}
+
+#[cfg(feature = "serde")]
+#[derive(serde::Deserialize)]
+struct UncheckedCoverageBand {
+    minimum: f64,
+    maximum: f64,
+}
+
+#[cfg(feature = "serde")]
+impl TryFrom<UncheckedCoverageBand> for CoverageBand {
+    type Error = Error;
+
+    fn try_from(value: UncheckedCoverageBand) -> Result<Self> {
+        Self::new(value.minimum, value.maximum)
+    }
 }
 
 impl CoverageBand {
@@ -284,11 +337,35 @@ impl CoverageBand {
 /// Each detected transition is bisected to `tolerance`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(try_from = "UncheckedRotationSearch"))]
 pub struct RotationSearch {
     minimum: Angle,
     maximum: Angle,
     sample_step: Angle,
     tolerance: Angle,
+}
+
+#[cfg(feature = "serde")]
+#[derive(serde::Deserialize)]
+struct UncheckedRotationSearch {
+    minimum: Angle,
+    maximum: Angle,
+    sample_step: Angle,
+    tolerance: Angle,
+}
+
+#[cfg(feature = "serde")]
+impl TryFrom<UncheckedRotationSearch> for RotationSearch {
+    type Error = Error;
+
+    fn try_from(value: UncheckedRotationSearch) -> Result<Self> {
+        Self::new(
+            value.minimum,
+            value.maximum,
+            value.sample_step,
+            value.tolerance,
+        )
+    }
 }
 
 impl RotationSearch {
@@ -321,12 +398,7 @@ impl RotationSearch {
                 values[0], values[1], values[2], values[3]
             )));
         }
-        let sample_count = ((values[1] - values[0]) / values[2]).ceil() as usize + 1;
-        if sample_count > MAX_ROTATION_SAMPLES {
-            return Err(Error::InvalidRotationSearch(format!(
-                "search requires {sample_count} samples; maximum is {MAX_ROTATION_SAMPLES}"
-            )));
-        }
+        checked_rotation_sample_count(values[0], values[1], values[2])?;
         Ok(Self {
             minimum,
             maximum,
@@ -405,11 +477,14 @@ pub fn coverage_rotation_intervals(
     let step = search.sample_step.degrees();
     let tolerance = search.tolerance.degrees();
 
-    let mut samples = vec![minimum];
-    let mut angle = minimum;
-    while angle + step < maximum {
-        angle += step;
-        samples.push(angle);
+    let sample_count = checked_rotation_sample_count(minimum, maximum, step)?;
+    let mut samples = Vec::with_capacity(sample_count);
+    samples.push(minimum);
+    for index in 1..sample_count - 1 {
+        let angle = minimum + step * index as f64;
+        if angle > *samples.last().expect("minimum sample exists") && angle < maximum {
+            samples.push(angle);
+        }
     }
     samples.push(maximum);
 
@@ -499,12 +574,38 @@ pub struct PointContainmentEvidence {
 /// sampled boundary is then projected to a union's persisted anchor.
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(try_from = "UncheckedSkyEllipse"))]
 pub struct SkyEllipse {
     centre: Equatorial,
     semi_major: Angle,
     semi_minor: Angle,
     sky_position_angle: Angle,
     segments: usize,
+}
+
+#[cfg(feature = "serde")]
+#[derive(serde::Deserialize)]
+struct UncheckedSkyEllipse {
+    centre: Equatorial,
+    semi_major: Angle,
+    semi_minor: Angle,
+    sky_position_angle: Angle,
+    segments: usize,
+}
+
+#[cfg(feature = "serde")]
+impl TryFrom<UncheckedSkyEllipse> for SkyEllipse {
+    type Error = Error;
+
+    fn try_from(value: UncheckedSkyEllipse) -> Result<Self> {
+        Self::new(
+            value.centre,
+            value.semi_major,
+            value.semi_minor,
+            value.sky_position_angle,
+            value.segments,
+        )
+    }
 }
 
 impl SkyEllipse {
@@ -933,14 +1034,27 @@ fn bisect_transition(
     tolerance: f64,
 ) -> Result<f64> {
     while upper - lower > tolerance {
-        let middle = (lower + upper) / 2.0;
+        let middle = lower + (upper - lower) / 2.0;
         if band.contains(pair.coverage_at(middle)?) == lower_inside {
             lower = middle;
         } else {
             upper = middle;
         }
     }
-    Ok((lower + upper) / 2.0)
+    Ok(if lower_inside { lower } else { upper })
+}
+
+fn checked_rotation_sample_count(minimum: f64, maximum: f64, step: f64) -> Result<usize> {
+    let span = maximum - minimum;
+    let intervals = span / step;
+    let maximum_intervals = (MAX_ROTATION_SAMPLES - 1) as f64;
+    let required_intervals = intervals.ceil().max(1.0);
+    if !span.is_finite() || !intervals.is_finite() || required_intervals > maximum_intervals {
+        return Err(Error::InvalidRotationSearch(format!(
+            "search exceeds the maximum of {MAX_ROTATION_SAMPLES} samples"
+        )));
+    }
+    Ok(required_intervals as usize + 1)
 }
 
 fn common_anchor(positions: &[Equatorial]) -> Result<Equatorial> {

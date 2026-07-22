@@ -330,10 +330,11 @@ fn rotation_coverage_reports_multiple_closed_intervals() {
         1e-9,
     );
 
+    let band = CoverageBand::new(0.95, 1.0).unwrap();
     let intervals = coverage_rotation_intervals(
         &left,
         &right,
-        CoverageBand::new(0.95, 1.0).unwrap(),
+        band,
         RotationSearch::new(
             Angle::from_degrees(-180.0),
             Angle::from_degrees(180.0),
@@ -349,6 +350,16 @@ fn rotation_coverage_reports_multiple_closed_intervals() {
     assert!(intervals[1].start.degrees() < 0.0 && intervals[1].end.degrees() > 0.0);
     assert!(intervals[2].start.degrees() > 170.0);
     assert!(intervals[2].end.degrees() >= 180.0);
+    for interval in &intervals {
+        for endpoint in [interval.start, interval.end] {
+            let coverage = coverage_at_residual_rotation(&left, &right, endpoint).unwrap();
+            assert!(
+                (band.minimum()..=band.maximum()).contains(&coverage),
+                "closed interval endpoint {} has out-of-band coverage {coverage}",
+                endpoint.degrees()
+            );
+        }
+    }
 
     assert!(CoverageBand::new(0.8, 0.2).is_err());
     assert!(RotationSearch::new(
@@ -356,6 +367,20 @@ fn rotation_coverage_reports_multiple_closed_intervals() {
         Angle::from_degrees(-10.0),
         Angle::from_degrees(1.0),
         Angle::from_degrees(0.1),
+    )
+    .is_err());
+    assert!(RotationSearch::new(
+        Angle::from_degrees(0.0),
+        Angle::from_degrees(1e300),
+        Angle::from_degrees(1e-300),
+        Angle::from_degrees(1e-300),
+    )
+    .is_err());
+    assert!(RotationSearch::new(
+        Angle::from_degrees(-1e308),
+        Angle::from_degrees(1e308),
+        Angle::from_degrees(1e308),
+        Angle::from_degrees(1e308),
     )
     .is_err());
 }
