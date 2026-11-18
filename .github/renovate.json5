@@ -1,0 +1,57 @@
+// Renovate config. Patch, minor, digest and pin updates (not 0.x) automerge only after the
+// pull_request CI check passes (workflow "CI"). Majors and 0.x versions never automerge.
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["config:recommended", "helpers:pinGitHubActionDigests"],
+  timezone: "Asia/Dubai",
+  schedule: ["before 6am on Monday"],
+  dependencyDashboard: { enabled: true }, // the "Dependency Dashboard" issue
+  prConcurrentLimit: 5,
+  prHourlyLimit: 2,
+  // Off by default; the packageRules below opt in.
+  automerge: false,
+  // Renovate merges the PR itself, only after it sees passing checks. GitHub native
+  // auto-merge would merge at once when the branch has no required status checks.
+  platformAutomerge: false,
+  automergeType: "pr",
+  // Default, kept explicit: with no status checks at all Renovate does not automerge.
+  ignoreTests: false,
+  // Skip versions younger than minimumReleaseAge instead of opening a PR with them.
+  internalChecksFilter: "strict",
+  // Wait for a release to age, so a freshly published malicious version is not proposed.
+  minimumReleaseAge: "3 days",
+  labels: ["dependencies"],
+  // Renovate opens PRs for Dependabot security alerts (alerts on; Dependabot version updates off).
+  vulnerabilityAlerts: { labels: ["security"] },
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["before 6am on the first day of the month"],
+    automerge: true,
+    // A refreshed lock file has no release timestamps, so the age check would hold it forever.
+    minimumReleaseAge: null,
+  },
+  packageRules: [
+    {
+      description: "Automerge minor and patch updates (not 0.x) once CI passes",
+      matchUpdateTypes: ["minor", "patch"],
+      matchCurrentVersion: "!/^0/",
+      automerge: true,
+    },
+    {
+      description: "Automerge digest and pin updates (actions, container images) once CI passes",
+      matchUpdateTypes: ["digest", "pin", "pinDigest"],
+      automerge: true,
+    },
+    {
+      description: "GitHub Actions",
+      groupName: "github actions",
+      matchManagers: ["github-actions"],
+    },
+    {
+      description: "Major updates open their own PR (separateMajorMinor) and carry a label",
+      matchUpdateTypes: ["major"],
+      labels: ["dependencies", "major"],
+      automerge: false,
+    },
+  ],
+}
